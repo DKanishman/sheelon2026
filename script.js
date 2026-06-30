@@ -8,7 +8,6 @@ let currentSurveyName = "";
 const SCRIPT_URL = 'הכנס_כאן_את_הקישור_של_גוגל_שיטס'; 
 
 function selectSurvey(surveyId) {
-    // טריק שבירת מטמון (Cache Busting): הוספת זמן נוכחי כדי שהדפדפן יחשוב שזה תמיד קובץ חדש
     const fetchUrl = 'questions.json?t=' + new Date().getTime();
     
     fetch(fetchUrl)
@@ -32,7 +31,14 @@ function selectSurvey(surveyId) {
 function startSurvey() {
     let first = document.getElementById('firstName').value.trim();
     let last = document.getElementById('lastName').value.trim();
+    let consentChecked = document.getElementById('consentCheck').checked;
     
+    // בדיקה שהמשתמש אישר את טופס ההסכמה
+    if (!consentChecked) {
+        showError("חובה לאשר את טופס ההסכמה על ידי סימון התיבה לפני תחילת השאלון.");
+        return;
+    }
+
     if(!first || !last) { 
         showError("נא למלא שם ושם משפחה כדי להתחיל."); 
         return; 
@@ -41,6 +47,7 @@ function startSurvey() {
     responses["Survey_Type"] = currentSurveyName;
     responses["Participant_Name"] = first + " " + last;
     responses["Start_Time"] = new Date().toLocaleString();
+    responses["Consent_Agreed"] = "כן"; // שומר את העובדה שהמשתמש הסכים
     responses["Answers"] = [];
     responses["Total_Score"] = 0;
 
@@ -108,7 +115,6 @@ function handleNext(qNum) {
 function finalizeSurvey() {
     responses["End_Time"] = new Date().toLocaleString();
     
-    // סכימת הציון הכולל
     responses["Total_Score"] = responses.Answers.reduce((sum, ans) => sum + ans.Score, 0);
     
     switchPage('q' + totalQuestions, 'success-msg');

@@ -21,6 +21,42 @@ input[type="text"] {
     font-size: 16px; box-sizing: border-box;
 }
 input::placeholder { color: #999; }
+
+/* עיצוב חדש לטופס ההסכמה */
+.consent-box {
+    border: 1px solid #ccc;
+    padding: 15px;
+    height: 150px;
+    overflow-y: scroll;
+    background: #f9f9f9;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.consent-box h4 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+.consent-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    cursor: pointer;
+    background: #e8f4f8;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #bce0ed;
+}
+.consent-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
 .option {
     display: block; background: #ffffff; border: 1px solid #cccccc;
     padding: 15px; margin-bottom: 10px; border-radius: 5px; 
