@@ -3,9 +3,10 @@ let responses = {};
 let currentSurveyData = null; 
 let totalQuestions = 0;
 let currentSurveyName = "";
+//is am testing this
 
 // *** חובה להדביק כאן את הקישור שקיבלת מגוגל שיטס! ***
-const SCRIPT_URL = 'הכנס_כאן_את_הקישור_של_גוגל_שיטס'; 
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxu1dwLOBA-Gg_lTHGI2gxmGCnwlkJ0QeBa4BJoHvw0ElOeDkc5iwtnJxYg3BV-Pw4yZg/exec'; 
 
 function selectSurvey(surveyId) {
     const fetchUrl = 'questions.json?t=' + new Date().getTime();
