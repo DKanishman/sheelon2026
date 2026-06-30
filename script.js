@@ -3,11 +3,24 @@ let responses = {};
 let currentSurveyData = null; 
 let totalQuestions = 0;
 let currentSurveyName = "";
-//is am testing this
 
 // *** חובה להדביק כאן את הקישור שקיבלת מגוגל שיטס! ***
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxu1dwLOBA-Gg_lTHGI2gxmGCnwlkJ0QeBa4BJoHvw0ElOeDkc5iwtnJxYg3BV-Pw4yZg/exec'; 
 
+// פונקציה ראשונה - אישור טופס ההסכמה
+function acceptConsent() {
+    let consentChecked = document.getElementById('consentCheck').checked;
+    if (!consentChecked) {
+        showError("חובה לאשר את טופס ההסכמה על ידי סימון התיבה לפני שממשיכים.");
+        return;
+    }
+    responses["Consent_Agreed"] = "כן";
+    
+    // מעבר ממסך ההסכמה למסך בחירת השאלונים
+    switchPage('consent-screen', 'survey-selection');
+}
+
+// פונקציה שניה - בחירת שאלון
 function selectSurvey(surveyId) {
     const fetchUrl = 'questions.json?t=' + new Date().getTime();
     
@@ -22,6 +35,8 @@ function selectSurvey(surveyId) {
             currentSurveyName = currentSurveyData.title;
             
             document.getElementById('survey-title-display').innerText = currentSurveyName;
+            
+            // מעבר ממסך הבחירה ישר למסך הזנת הפרטים (ההסכמה כבר ניתנה)
             switchPage('survey-selection', 'intro');
         })
         .catch(error => {
@@ -32,13 +47,6 @@ function selectSurvey(surveyId) {
 function startSurvey() {
     let first = document.getElementById('firstName').value.trim();
     let last = document.getElementById('lastName').value.trim();
-    let consentChecked = document.getElementById('consentCheck').checked;
-    
-    // בדיקה שהמשתמש אישר את טופס ההסכמה
-    if (!consentChecked) {
-        showError("חובה לאשר את טופס ההסכמה על ידי סימון התיבה לפני תחילת השאלון.");
-        return;
-    }
 
     if(!first || !last) { 
         showError("נא למלא שם ושם משפחה כדי להתחיל."); 
@@ -48,9 +56,17 @@ function startSurvey() {
     responses["Survey_Type"] = currentSurveyName;
     responses["Participant_Name"] = first + " " + last;
     responses["Start_Time"] = new Date().toLocaleString();
-    responses["Consent_Agreed"] = "כן"; // שומר את העובדה שהמשתמש הסכים
+    
+    // במידה ולא הוגדר קודם, נוודא שיש אישור (למרות שהם לא יכלו להגיע לפה בלי)
+    if(!responses["Consent_Agreed"]) {
+        responses["Consent_Agreed"] = "כן";
+    }
+
     responses["Answers"] = [];
     responses["Total_Score"] = 0;
+    responses["Score_A"] = 0; 
+    responses["Score_B"] = 0; 
+    responses["Score_C"] = 0; 
 
     renderQuestions();
     switchPage('intro', 'q1');
