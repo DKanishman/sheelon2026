@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת שאלונים למחקר</title>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <div id="error-box" class="error-msg"></div>
+
+    <div id="survey-selection" class="section active">
+        <h2>ברוכים הבאים למערכת השאלונים</h2>
+        <p class="scenario-text">אנא בחרו את השאלון שברצונכם למלא:</p>
+        <div class="options-container">
+            <button class="btn btn-survey" onclick="selectSurvey('survey1')">📄 שאלון 1 (50 שאלות)</button>
+            <button class="btn btn-survey" onclick="selectSurvey('survey2')">📄 שאלון 2 (18 שאלות)</button>
+            <button class="btn btn-survey" onclick="selectSurvey('survey7')">📄 שאלון 7 (7 שאלות)</button>
+            <button class="btn btn-survey" onclick="selectSurvey('survey8')">📄 שאלון 8 (17 שאלות)</button>
+            <button class="btn btn-survey" onclick="selectSurvey('survey9')">📄 שאלון 9 (9 שאלות)</button>
+            <button class="btn btn-survey" onclick="selectSurvey('survey10')">📄 שאלון 10 (10 שאלות)</button>
+        </div>
+    </div>
+
+    <div id="intro" class="section">
+        <h2 id="survey-title-display">טוען שאלון...</h2>
+        <p style="color: #555; margin-bottom: 20px;">אנא ענו על השאלות בהתאם להרגשתכם. סמנו את התשובה המתארת בצורה הטובה ביותר את עמדתכם.</p>
+        <p>כדי להתחיל, אנא הזינו את פרטיכם:</p>
+        <input type="text" id="firstName" placeholder="שם פרטי">
+        <input type="text" id="lastName" placeholder="שם משפחה">
+        <button class="btn btn-start" onclick="startSurvey()">התחל שאלון</button>
+    </div>
+
+    <div id="survey-container"></div>
+
+    <div id="success-msg" class="section" style="text-align: center;">
+        <h2 style="color: #2ecc71;">תודה רבה!</h2>
+        <p style="color: #333333; font-size: 18px;">השאלון הסתיים בהצלחה ותשובותיך נשמרו.</p>
+        <p style="color: #555555; margin-bottom: 20px;">ניתן לסגור לשונית זו כעת.</p>
+    </div>
+</div>
+
+<script src="script.js?v=2"></script>
+</body>
+</html>
