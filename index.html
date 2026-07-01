@@ -11,53 +11,137 @@
 
 <div class="container">
     <div id="error-box" class="error-msg"></div>
-
-    <div id="consent-screen" class="section active">
-        <h2>טופס הסכמה מדעת</h2>
-        <div class="consent-box">
-            <p><strong>שלום רב,</strong><br>
-            אנו מזמינים אותך להשתתף במחקר העוסק בהערכת היכולות הפרגמטיות לצורך פיתוח תכניות התערבות מותאמות אישית. הערכה מתמקדת בעיקר ביעילות התקשורתית, ללא תלות בהיבטים הפורמליים של השפה.</p>
-            <p>במסגרת המחקר תתבקש/י להשתתף במספר מטלות הכוללות מענה על שאלונים. אם תרצה/י בכך, תוכל/י להפסיק את השתתפותך במחקר בכל שלב, מבלי שתהיה לכך כל השלכה עליך. כל הנתונים המזהים במחקר ישמרו חסויים ולא יפורסמו באופן שיאפשר את זיהויך.</p>
-            <p>המחקר נערך בנושא "הערכת היכולות הפרגמטיות בקרב מבוגרים". בכל בעיה הקשורה למחקר ניתן לפנות לחוקרת ד"ר ילנה אבן-סימקין להתייעצות נוספת באימייל elenaev@sce.ac.il.</p>
+    
+    <div id="custom-confirm" class="section">
+        <div class="confirm-box">
+            <h2 style="color: #e74c3c;">שים לב!</h2>
+            <p>אם תחזור למסך הראשי, כל התשובות שמילאת בשאלון זה יימחקו. האם ברצונך להמשיך?</p>
+            <button class="btn" style="background: #e74c3c;" onclick="confirmBack()">כן, חזור</button>
+            <button class="btn btn-back" onclick="cancelBack()">לא, המשך בשאלון</button>
         </div>
-        <label class="consent-label">
-            <input type="checkbox" id="consentCheck">
-            קראתי את טופס ההסכמה ואני מסכים/ה להשתתף במחקר (חובה)
-        </label>
-        <button class="btn btn-start" onclick="acceptConsent()">המשך לבחירת שאלון</button>
     </div>
 
-    <div id="survey-selection" class="section">
+    <div id="survey-selection" class="section active">
         <h2>ברוכים הבאים למערכת השאלונים</h2>
-        <p class="scenario-text">אנא בחרו את השאלון שברצונכם למלא:</p>
+        <p class="scenario-text">לפני תחילת המענה, חובה למלא ולשלוח את טופס ההסכמה מדעת.</p>
         <div class="options-container">
+            <button class="btn btn-survey" style="background-color: #27ae60;" onclick="openConsentForm()">📄 כניסה לטופס הסכמה מדעת</button>
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+            <p class="scenario-text">שאלונים למילוי:</p>
             <button class="btn btn-survey" onclick="selectSurvey('survey1')">📄 שאלון 1 (50 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey2')">📄 שאלון 2 (18 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey7')">📄 שאלון 7 (7 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey8')">📄 שאלון 8 (17 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey9')">📄 שאלון 9 (9 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey10')">📄 שאלון 10 (10 שאלות)</button>
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+            <p class="scenario-text">למילוי בסיום כל השאלונים:</p>
+            <button class="btn btn-survey" style="background-color: #f39c12;" onclick="openReceiptForm()">💳 חתימה על קבלה (100 ₪)</button>
         </div>
+    </div>
+
+    <div id="full-consent-screen" class="section">
+        <h2>הסכמה מדעת להשתתפות במחקר</h2>
+        <div class="consent-box" style="height: 250px; text-align: right;">
+            <p><strong>שלום רב,</strong><br>
+            אנו מזמינים אותך להשתתף במחקר העוסק בהערכת היכולות הפרגמטיות לצורך פיתוח תכניות התערבות מותאמות אישית. תוכניות אלו יתבססו על הערכת היכולות הפרגמטיות בדיבור תוך התמקדות בתחומים המרכזיים הנבדקים בפרגמטיקה הקלינית: מימד השיח והבנת משמעות שאינה מילולית. הערכה מתמקדת בעיקר ביעילות התקשורתית, ללא תלות בהיבטים הפורמליים של השפה, כגון דקדוק או הגייה תקינה.</p>
+            <p>במסגרת המחקר תתבקש/י להשתתף במספר מטלות הכוללות מענה על שאלות בתחומים הבאים: הפקה פרגמטית וניהול שיח, הבנת משמעות עקיפה והבנת שפה ציורית. כמו כן, תתבקש/י למלא שאלונים הנדרשים לצורך המחקר.</p>
+            <p>אם תרצה/י בכך, תוכל/י להפסיק את השתתפותך במחקר בכל שלב, מבלי שתהיה לכך כל השלכה עליך ולא תפגע בך בכל דרך שהיא בהמשך. כל הנתונים המזהים במחקר ישמרו חסויים ולא יהיו זמינים לאף אחד מלבד צוות המחקר, ולא יפורסמו באופן שיאפשר את זיהויך.</p>
+            <p>השתתפותך במחקר עשויה לתרום באופן משמעותי לקידום הידע בתחום הפרגמטיקה ולפיתוח תוכניות התערבות מותאמות אישית עבור מבוגרים המתמודדים עם קשיים בתחום הפרגמטיקה. עם זאת, חשוב להבהיר כי אינך חייב/ת להשתתף במחקר, ולאי-הסכמה לא תהיה כל השלכה עליך ולא תפגע בך בכל דרך שהיא בהמשך.</p>
+            <p>כתמורה על ההשתתפותך במחקר, תקבל/י תגמול כספי.<br>
+            תודה מראש על שיתוף הפעולה.<br>
+            בברכה, ד"ר ילנה אבן-סימקין.</p>
+            <hr>
+            <h4>הצהרת המשתתף:</h4>
+            <p>מצהיר/ה בזה כי הוסבר לי מטרות המחקר וחשיבותו, כי ההשתתפות הנה מבחירה בלבד, וכי מובטחת סודיות באשר לזהותי האישית בפרסומים מדעיים. בכל בעיה הקשורה למחקר ניתן לפנות לחוקרת ד"ר ילנה אבן-סימקין באימייל elenaev@sce.ac.il.</p>
+        </div>
+        
+        <div style="background: #f0f4f8; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <h4 style="margin-top: 0;">אנא מלא/י את פרטייך לאישור ההסכמה:</h4>
+            <input type="text" id="consent-fname" placeholder="שם פרטי">
+            <input type="text" id="consent-lname" placeholder="שם משפחה">
+            <input type="text" id="consent-id" placeholder="מס' ת.ז.">
+            <input type="text" id="consent-address" placeholder="כתובת">
+            <input type="text" id="consent-phone" placeholder="טלפון">
+        </div>
+
+        <label class="consent-label">
+            <input type="checkbox" id="fullConsentCheck">
+            לאחר שהבנתי את האמור לעיל, הריני מצהיר/ה בזה כי אני מסכים/ה להשתתף במחקר כמפורט במסמך זה.
+        </label>
+        
+        <button class="btn btn-start" onclick="submitConsentForm()">שלח טופס הסכמה (חתימה דיגיטלית)</button>
+        <button class="btn btn-back" style="width: 100%; margin-top: 10px;" onclick="switchPage('full-consent-screen', 'survey-selection')">חזור למסך הראשי</button>
+    </div>
+
+    <div id="receipt-screen" class="section">
+        <h2>קבלה</h2>
+        <div class="consent-box" style="height: auto; text-align: right;">
+            <p>הנני מצהיר/ה כי השתתפתי כנבדק במחקרו של החוקר ד"ר ילנה אבן-סימקין.</p>
+            <p>עבור השתתפותי כנבדק במחקר קיבלתי (העברה בנקאית בסך): <strong>100 ₪</strong></p>
+            
+            <hr style="margin: 15px 0;">
+            <p><strong>הנני מצהיר/ה כי בשנת המס הנוכחית (נא לבחור אחת מהאפשרויות):</strong></p>
+            <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                <input type="radio" name="tax-declaration" value="קיבלתי גמול מסוג זה סך 100 שקלים"> קבלתי גמול מסוג זה (מכלל הניסויים בהם השתתפתי) סך 100 ₪
+            </label>
+            <label style="display: block; margin-bottom: 15px; cursor: pointer;">
+                <input type="radio" name="tax-declaration" value="לא קיבלתי גמול מסוג זה"> לא קיבלתי גמול מסוג זה בגין השתתפות במחקר זה או אחר במכללה
+            </label>
+            <hr style="margin: 15px 0;">
+
+            <p style="font-size: 13px;">ידוע לי כי קבלת גמול זה בגין השתתפותי במחקר אין משמעותה קיום יחסי עובד- מעביד ולא תהיה לי כל תביעה כנגד המכללה בהקשר זה.</p>
+            <p style="font-size: 13px;">כמו כן ידוע לי כי יתכן ואחויב לשלם מס, באם תקרת התקבולים השנתית מגמול מסוג זה תעלה על התקרה הקבועה בחוק (נכון ליום 1.1.12 התקרה הינה 4,800 ₪).</p>
+        </div>
+
+        <div style="background: #fdf5e6; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <h4 style="margin-top: 0;">חתימה על הקבלה:</h4>
+            <input type="text" id="receipt-name" placeholder="שם מלא">
+            <input type="text" id="receipt-id" placeholder="תעודת זהות">
+            <p style="margin: 10px 0 0 0; font-size: 14px; color: #7f8c8d;">* תאריך ושעת החתימה יתועדו אוטומטית במערכת בעת השליחה.</p>
+        </div>
+
+        <label class="consent-label" style="background: #fdf5e6; border-color: #f39c12;">
+            <input type="checkbox" id="receiptCheck">
+            אני מאשר/ת את חתימתי על קבלה זו ואת נכונות הפרטים
+        </label>
+        
+        <button class="btn btn-start" style="background-color: #f39c12;" onclick="submitReceiptForm()">שלח קבלה (חתימה דיגיטלית)</button>
+        <button class="btn btn-back" style="width: 100%; margin-top: 10px;" onclick="switchPage('receipt-screen', 'survey-selection')">חזור למסך הראשי</button>
+    </div>
+
+    <div id="confidentiality-screen" class="section">
+        <h2>הקדמה לשאלונים בנוגע לסודיות:</h2>
+        <div class="consent-box" style="height: auto; text-align: right; background: #e8f4f8; border-color: #bce0ed;">
+            <p style="font-size: 18px; color: #2c3e50; font-weight: bold;">
+                אני מסכים/ה לענות על כל השאלות וידוע לי כי כל הנתונים שאמסור יקודדו ויישמרו בסודיות מלאה ולא יאפשרו את זיהוי זהותי.
+            </p>
+            <p style="font-size: 16px; color: #555;">תודה.</p>
+        </div>
+        
+        <label class="consent-label">
+            <input type="checkbox" id="confidentialityCheck">
+            קראתי ואני מאשר/ת
+        </label>
+        
+        <button class="btn btn-start" onclick="proceedToIntro()">המשך להזנת פרטים</button>
+        <button class="btn btn-back" style="width: 100%; margin-top: 10px;" onclick="switchPage('confidentiality-screen', 'survey-selection')">חזור למסך הראשי</button>
     </div>
 
     <div id="intro" class="section">
         <h2 id="survey-title-display">טוען שאלון...</h2>
         <p style="color: #555; margin-bottom: 20px;">אנא ענו על השאלות בהתאם להרגשתכם. סמנו את התשובה המתארת בצורה הטובה ביותר את עמדתכם.</p>
-        <p>כדי להתחיל, ולצורך חתימה דיגיטלית, אנא הזינו את פרטיכם:</p>
+        <p>הזינו את שמכם כדי להתחיל בשאלון:</p>
         <input type="text" id="firstName" placeholder="שם פרטי">
         <input type="text" id="lastName" placeholder="שם משפחה">
         <button class="btn btn-start" onclick="startSurvey()">התחל שאלון</button>
+        <button class="btn btn-back" style="width: 100%; margin-top: 10px;" onclick="switchPage('intro', 'survey-selection')">חזור למסך הראשי</button>
     </div>
 
     <div id="survey-container"></div>
-
-    <div id="success-msg" class="section" style="text-align: center;">
-        <h2 style="color: #2ecc71;">תודה רבה!</h2>
-        <p style="color: #333333; font-size: 18px;">השאלון הסתיים בהצלחה ותשובותיך נשמרו.</p>
-        <p style="color: #555555; margin-bottom: 20px;">ניתן לסגור לשונית זו כעת.</p>
-    </div>
+    <div id="success-msg" class="section" style="text-align: center;"></div>
 </div>
 
-<script src="script.js?v=5"></script>
+<script src="script.js?v=7"></script>
 </body>
 </html>

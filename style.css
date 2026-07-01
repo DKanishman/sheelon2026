@@ -85,3 +85,22 @@ input::placeholder { color: #999; }
     h2 { font-size: 20px; }
     .btn, .btn-survey { width: 100%; margin-left: 0; margin-bottom: 10px; box-sizing: border-box; } 
 }
+.btn-back {
+    background: #95a5a6; /* צבע אפור שונה */
+    margin-right: 10px;
+}
+.btn-back:hover {
+    background: #7f8c8d;
+}
+.confirm-box {
+    border: 2px solid #e74c3c;
+    background: #fffafa;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    margin-top: 20px;
+}
+.btn-back {
+    background: #95a5a6;
+    margin-right: 10px;
+}
