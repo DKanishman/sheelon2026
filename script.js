@@ -200,18 +200,18 @@ function renderQuestions() {
     const container = document.getElementById('survey-container'); 
     let html = '';
     
-    // הצגת תיאור/הנחיה כללית במידה ויש (למשל לשאלון 3)
+    // הכנת בלוק התיאור (בלי הגדרת section שמתנגשת במערכת)
+    let descHtml = '';
     if (currentSurveyData.description) {
-        html += `<div class="section active" style="margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 5px;">
-                    <h3 style="margin: 0; color: #2c3e50; text-align: center;">${currentSurveyData.description}</h3>
-                 </div>`;
+        descHtml = `<div style="margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 5px;">
+                        <h3 style="margin: 0; color: #2c3e50; text-align: center;">${currentSurveyData.description}</h3>
+                     </div>`;
     }
 
     currentSurveyData.questions.forEach((qObj, index) => {
         const qNum = index + 1; 
         let optionsHtml = '';
         
-        // משיכת אפשרויות מהשאלה הספציפית או מהשאלון הכללי
         let qOptions = qObj.options || currentSurveyData.options;
         
         qOptions.forEach((opt, optIndex) => {
@@ -219,12 +219,12 @@ function renderQuestions() {
             optionsHtml += `<label class="option"><input type="radio" name="ans${qNum}" value="${opt}" data-score="${score}"> ${opt}</label>`;
         });
         
-        // יצירת תמונת השאלה במידה ומוגדרת
         let imageHtml = qObj.image ? `<img src="${qObj.image}" alt="שאלה ${qNum}" style="max-width: 100%; height: auto; display: block; margin: 15px auto; border: 2px solid #ccc; border-radius: 5px;">` : '';
 
-        // יצירת בלוק ה-HTML של השאלה
+        // הכנסת התיאור לתוך הבלוק של השאלה עצמה
         html += `
         <div id="q${qNum}" class="section">
+            ${descHtml}
             <h2>שאלה ${qNum} מתוך ${totalQuestions} ${qObj.part ? '(חלק ' + qObj.part + ')' : ''}</h2>
             ${imageHtml}
             <p class="scenario-text">${qObj.text || ""}</p>
@@ -254,6 +254,9 @@ function confirmBack() {
     let hadConsent = responses["Consent_Agreed"]; 
     responses = {}; 
     if (hadConsent) responses["Consent_Agreed"] = hadConsent;
+    
+    // התיקון: ניקוי מוחלט של אזור השאלון כדי שתמונות לא יישארו תלויות
+    document.getElementById('survey-container').innerHTML = '';
     
     document.getElementById('custom-confirm').classList.remove('active'); 
     document.getElementById('survey-selection').classList.add('active');
