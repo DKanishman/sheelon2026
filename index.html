@@ -26,8 +26,10 @@
         <p class="scenario-text">לפני תחילת המענה, חובה למלא ולשלוח את טופס ההסכמה מדעת.</p>
         <div class="options-container">
             <button class="btn btn-survey" style="background-color: #27ae60;" onclick="openConsentForm()">📄 כניסה לטופס הסכמה מדעת</button>
+            
             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
             <p class="scenario-text">שאלונים למילוי:</p>
+            
             <button class="btn btn-survey" onclick="selectSurvey('survey1')">📄 שאלון 1 (50 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey2')">📄 שאלון 2 (18 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey3')">📄 שאלון 3 (60 שאלות)</button>
@@ -35,9 +37,10 @@
             <button class="btn btn-survey" onclick="selectSurvey('survey8')">📄 שאלון 8 (17 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey9')">📄 שאלון 9 (9 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey10')">📄 שאלון 10 (10 שאלות)</button>
+            
             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
             <p class="scenario-text">למילוי בסיום כל השאלונים:</p>
-            <button class="btn btn-survey" style="background-color: #f39c12;" onclick="openReceiptForm()">💳 חתימה על קבלה (100 ₪)</button>
+            <button class="btn btn-survey" style="background-color: #f39c12;" onclick="openReceiptForm()">💳 חתימה על קבלה</button>
         </div>
     </div>
 
@@ -79,15 +82,17 @@
         <h2>קבלה</h2>
         <div class="consent-box" style="height: auto; text-align: right;">
             <p>הנני מצהיר/ה כי השתתפתי כנבדק במחקרו של החוקר ד"ר ילנה אבן-סימקין.</p>
-            <p>עבור השתתפותי כנבדק במחקר קיבלתי (העברה בנקאית בסך): <strong>100 ₪</strong></p>
+            <p style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">בחר/י את סכום התגמול שקיבלת:</p>
+            <select id="receipt-amount" style="width: 100%; padding: 10px; margin-bottom: 15px; font-family: 'Assistant', sans-serif; font-size: 16px; border: 1px solid #ccc; border-radius: 5px;" onchange="updateTaxDeclaration()">
+                <option value="100 ₪" selected>העברה בנקאית בסך 100 ₪</option>
+                <option value="50 ₪">העברה בנקאית בסך 50 ₪</option>
+            </select>
             
             <hr style="margin: 15px 0;">
-            <p><strong>הנני מצהיר/ה כי בשנת המס הנוכחית (נא לבחור אחת מהאפשרויות):</strong></p>
-            <label style="display: block; margin-bottom: 10px; cursor: pointer;">
-                <input type="radio" name="tax-declaration" value="קיבלתי גמול מסוג זה סך 100 שקלים"> קבלתי גמול מסוג זה (מכלל הניסויים בהם השתתפתי) סך 100 ₪
-            </label>
+            <p><strong>הנני מצהיר/ה כי בשנת המס הנוכחית:</strong></p>
             <label style="display: block; margin-bottom: 15px; cursor: pointer;">
-                <input type="radio" name="tax-declaration" value="לא קיבלתי גמול מסוג זה"> לא קיבלתי גמול מסוג זה בגין השתתפות במחקר זה או אחר במכללה
+                <input type="radio" name="tax-declaration" id="tax-dec-radio" value="קיבלתי גמול מסוג זה סך 100 ₪"> 
+                <span id="tax-dec-text">קבלתי גמול מסוג זה (מכלל הניסויים בהם השתתפתי) סך 100 ₪</span>
             </label>
             <hr style="margin: 15px 0;">
 
@@ -143,6 +148,6 @@
     <div id="success-msg" class="section" style="text-align: center;"></div>
 </div>
 
-<script src="script.js?v=7"></script>
+<script src="script.js?v=10"></script>
 </body>
 </html>
