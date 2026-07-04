@@ -7,13 +7,10 @@ let currentSurveyName = "";
 // *** חובה להדביק כאן את הקישור שקיבלת מגוגל שיטס! ***
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-6UTuvAo7kbnnra1VDwNzmTISYMnn3K3YNt5Y-QVyl3vxMYZ3mk_XtdSbTNbVcjfs/exec'; 
 
-
 // ==========================================
 // 1. ניהול טופס הסכמה מדעת
 // ==========================================
-function openConsentForm() {
-    switchPage('survey-selection', 'full-consent-screen');
-}
+function openConsentForm() { switchPage('survey-selection', 'full-consent-screen'); }
 
 function submitConsentForm() {
     let fname = document.getElementById('consent-fname').value.trim();
@@ -23,16 +20,11 @@ function submitConsentForm() {
     let phone = document.getElementById('consent-phone').value.trim();
     let agreed = document.getElementById('fullConsentCheck').checked;
 
-    if (!fname || !lname || !id || !address || !phone) {
-        showError("נא למלא את כל השדות בטופס ההסכמה."); return;
-    }
-    if (!agreed) {
-        showError("חובה לסמן את תיבת ההסכמה בסוף הטופס."); return;
-    }
+    if (!fname || !lname || !id || !address || !phone) { showError("נא למלא את כל השדות בטופס ההסכמה."); return; }
+    if (!agreed) { showError("חובה לסמן את תיבת ההסכמה בסוף הטופס."); return; }
 
     let consentPayload = {
-        Survey_Type: "טופס הסכמה מדעת",
-        Participant_Name: fname + " " + lname,
+        Survey_Type: "טופס הסכמה מדעת", Participant_Name: fname + " " + lname,
         Consent_Data: { FirstName: fname, LastName: lname, ID: id, Address: address, Phone: phone, Agreed: "כן" }
     };
 
@@ -46,22 +38,15 @@ function submitConsentForm() {
         document.getElementById('success-msg').innerHTML = `
             <h2 style="color: #2ecc71;">תודה רבה!</h2>
             <p style="color: #333333; font-size: 18px;">טופס ההסכמה שלך נשלח ונחתם בהצלחה.</p>
-            <button class="btn btn-survey" style="max-width: 300px; margin: 0 auto; display: block;" onclick="returnToMainFromSuccess()">חזרה למסך הראשי</button>
-        `;
-    }).catch(error => {
-        showError("אירעה שגיאה בשליחת הנתונים."); switchPage('success-msg', 'full-consent-screen');
-    });
+            <button class="btn btn-survey" style="max-width: 300px; margin: 0 auto; display: block;" onclick="returnToMainFromSuccess()">חזרה למסך הראשי</button>`;
+    }).catch(error => { showError("אירעה שגיאה בשליחת הנתונים."); switchPage('success-msg', 'full-consent-screen'); });
 }
-
 
 // ==========================================
 // 2. ניהול טופס קבלה לסיום המחקר
 // ==========================================
-function openReceiptForm() {
-    switchPage('survey-selection', 'receipt-screen');
-}
+function openReceiptForm() { switchPage('survey-selection', 'receipt-screen'); }
 
-// פונקציה לעדכון דינמי של הצהרת המס בעקבות בחירת הסכום
 function updateTaxDeclaration() {
     let amount = document.getElementById('receipt-amount').value;
     document.getElementById('tax-dec-text').innerText = `קבלתי גמול מסוג זה (מכלל הניסויים בהם השתתפתי) סך ${amount}`;
@@ -75,29 +60,14 @@ function submitReceiptForm() {
     let checkedRadio = document.querySelector('input[name="tax-declaration"]:checked');
     let agreed = document.getElementById('receiptCheck').checked;
 
-    if (!name || !id) {
-        showError("נא למלא שם ותעודת זהות."); return;
-    }
-    if (!checkedRadio) {
-        showError("נא לסמן את אפשרות ההצהרה בנוגע לגמול."); return;
-    }
-    if (!agreed) {
-        showError("חובה לסמן את אישור החתימה בתחתית הקבלה."); return;
-    }
+    if (!name || !id) { showError("נא למלא שם ותעודת זהות."); return; }
+    if (!checkedRadio) { showError("נא לסמן את אפשרות ההצהרה בנוגע לגמול."); return; }
+    if (!agreed) { showError("חובה לסמן את אישור החתימה בתחתית הקבלה."); return; }
 
     let autoDateTime = new Date().toLocaleString('he-IL');
-
     let receiptPayload = {
-        Survey_Type: "קבלה",
-        Participant_Name: name,
-        Receipt_Data: {
-            Name: name,
-            ID: id,
-            ReceiptDate: autoDateTime,
-            Amount: amount,
-            TaxDeclaration: checkedRadio.value,
-            Agreed: "כן"
-        }
+        Survey_Type: "קבלה", Participant_Name: name,
+        Receipt_Data: { Name: name, ID: id, ReceiptDate: autoDateTime, Amount: amount, TaxDeclaration: checkedRadio.value, Agreed: "כן" }
     };
 
     switchPage('receipt-screen', 'success-msg');
@@ -109,16 +79,12 @@ function submitReceiptForm() {
         document.getElementById('success-msg').innerHTML = `
             <h2 style="color: #2ecc71;">תודה רבה!</h2>
             <p style="color: #333333; font-size: 18px;">הקבלה נחתמה ונשלחה בהצלחה.</p>
-            <button class="btn btn-survey" style="max-width: 300px; margin: 0 auto; display: block;" onclick="returnToMainFromSuccess()">חזרה למסך הראשי</button>
-        `;
-    }).catch(error => {
-        showError("אירעה שגיאה בשליחת הנתונים."); switchPage('success-msg', 'receipt-screen');
-    });
+            <button class="btn btn-survey" style="max-width: 300px; margin: 0 auto; display: block;" onclick="returnToMainFromSuccess()">חזרה למסך הראשי</button>`;
+    }).catch(error => { showError("אירעה שגיאה בשליחת הנתונים."); switchPage('success-msg', 'receipt-screen'); });
 }
 
-
 // ==========================================
-// 3. ניווט, סודיות והתחלת שאלון
+// 3. ניווט והתחלת שאלון
 // ==========================================
 function selectSurvey(surveyId) {
     const fetchUrl = 'questions.json?t=' + new Date().getTime();
@@ -128,7 +94,6 @@ function selectSurvey(surveyId) {
             currentSurveyData = data[surveyId]; 
             totalQuestions = currentSurveyData.questions.length; 
             currentSurveyName = currentSurveyData.title;
-            
             document.getElementById('survey-title-display').innerText = currentSurveyName; 
             document.getElementById('confidentialityCheck').checked = false;
             switchPage('survey-selection', 'confidentiality-screen');
@@ -137,9 +102,7 @@ function selectSurvey(surveyId) {
 }
 
 function proceedToIntro() {
-    if (!document.getElementById('confidentialityCheck').checked) {
-        showError("נא לאשר את הצהרת הסודיות כדי להמשיך."); return;
-    }
+    if (!document.getElementById('confidentialityCheck').checked) { showError("נא לאשר את הצהרת הסודיות כדי להמשיך."); return; }
     switchPage('confidentiality-screen', 'intro');
 }
 
@@ -148,11 +111,10 @@ function startSurvey() {
     let last = document.getElementById('lastName').value.trim();
 
     if(!first || !last) { showError("נא למלא שם ושם משפחה כדי להתחיל."); return; }
-    
     responses["Survey_Type"] = currentSurveyName; 
     responses["Participant_Name"] = first + " " + last; 
     responses["Start_Time"] = new Date().toLocaleString();
-    if(!responses["Consent_Agreed"]) { responses["Consent_Agreed"] = "טרם מולא טופס מלא במסך הראשי"; }
+    if(!responses["Consent_Agreed"]) { responses["Consent_Agreed"] = "טרם מולא טופס מלא"; }
     responses["Answers"] = []; 
     responses["Total_Score"] = 0;
 
@@ -161,144 +123,198 @@ function startSurvey() {
     startTime = Date.now(); 
 }
 
-
 // ==========================================
-// 4. רינדור (הצגת) השאלות - ניתוב לפי סוג
+// 4. רינדור לפי סוג השאלון
 // ==========================================
 function renderQuestions() {
-    // בדיקה האם מדובר בשאלון רייבן או בשאלון רגיל וקריאה לפונקציה המתאימה
-    if (currentSurveyName === "שאלון 3 (מטריצות רייבן)") {
+    if (currentSurveyData.type === "faux_pas") {
+        renderFauxPasQuestions();
+    } else if (currentSurveyName === "שאלון 3 (מטריצות רייבן)") {
         renderRavenQuestions();
     } else {
         renderRegularQuestions();
     }
 }
 
-// פונקציית רינדור לשאלונים הרגילים (מחזירה אותם לעיצוב הסטנדרטי המקורי)
-function renderRegularQuestions() {
+// פונקציה לשאלון 4 (הבנת סיטואציות - Faux Pas)
+function renderFauxPasQuestions() {
     const container = document.getElementById('survey-container'); 
     let html = '';
+    
+    if (currentSurveyData.description) {
+        html += `<div style="margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #2c3e50; text-align: center;">${currentSurveyData.description}</h3>
+                 </div>`;
+    }
 
     currentSurveyData.questions.forEach((qObj, index) => {
         const qNum = index + 1; 
-        let optionsHtml = '';
-        let qOptions = qObj.options || currentSurveyData.options;
-        
-        qOptions.forEach((opt, optIndex) => {
-            const score = qObj.scores[optIndex]; 
-            optionsHtml += `<label class="option"><input type="radio" name="ans${qNum}" value="${opt}" data-score="${score}"> ${opt}</label>`;
-        });
         
         html += `
         <div id="q${qNum}" class="section">
             <h2>שאלה ${qNum} מתוך ${totalQuestions}</h2>
-            <p class="scenario-text">${qObj.text}</p>
-            <div style="margin-top:10px;">
-                ${optionsHtml}
+            
+            <p class="scenario-text" style="font-size: 18px; font-weight: normal; line-height: 1.6; background: #fff; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
+                ${qObj.story}
+            </p>
+            
+            <div style="margin-top:20px; background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 5px;">
+                <p style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">1. האם מישהו אמר משהו שהוא לא היה צריך להגיד?</p>
+                <select id="fp_q1_${qNum}" style="width: 100%; padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; font-family: 'Assistant';" onchange="handleFauxPasChange(${qNum})">
+                    <option value="">-- בחר/י תשובה --</option>
+                    <option value="כן">כן</option>
+                    <option value="לא">לא</option>
+                </select>
+
+                <div id="fp_open_questions_${qNum}" style="display: none; margin-top: 15px;">
+                    <div id="fp_yes_part_${qNum}">
+                        <p style="font-weight: bold; margin-bottom: 5px;">2. מי אמר משהו שהוא לא היה צריך להגיד?</p>
+                        <input type="text" id="fp_q2_${qNum}" placeholder="הכנס תשובה">
+                        
+                        <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">3. מדוע הוא/היא לא היה צריך להגיד זאת?</p>
+                        <input type="text" id="fp_q3_${qNum}" placeholder="הכנס תשובה">
+                        
+                        <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">4. מדוע הוא אמר זאת?</p>
+                        <input type="text" id="fp_q4_${qNum}" placeholder="הכנס תשובה">
+                    </div>
+
+                    <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">5. ${qObj.q5}</p>
+                    <input type="text" id="fp_q5_${qNum}" placeholder="הכנס תשובה">
+                </div>
             </div>
+            
             <br>
             <button class="btn btn-back" onclick="goBackToMain()">חזור למסך הראשי</button>
-            <button class="btn" onclick="handleNext(${qNum})">${qNum < totalQuestions ? 'המשך לשאלה הבאה' : 'סיום ושליחה'}</button>
+            <button class="btn" onclick="handleFauxPasNext(${qNum})">${qNum < totalQuestions ? 'המשך לשאלה הבאה' : 'סיום ושליחה'}</button>
         </div>
         `;
     });
     container.innerHTML = html;
 }
 
-// פונקציית רינדור מיוחדת לשאלון רייבן בלבד (תמונות, גריד רוחבי, וסדר הפוך)
-function renderRavenQuestions() {
-    const container = document.getElementById('survey-container'); 
-    let html = '';
+// פונקציית שליטה בתצוגה של השאלות הפתוחות בהתאם לבחירת כן/לא
+function handleFauxPasChange(qNum) {
+    const val = document.getElementById(`fp_q1_${qNum}`).value;
+    const container = document.getElementById(`fp_open_questions_${qNum}`);
+    const yesPart = document.getElementById(`fp_yes_part_${qNum}`);
     
-    let descHtml = '';
-    if (currentSurveyData.description) {
-        descHtml = `<div style="margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 5px;">
-                        <h3 style="margin: 0; color: #2c3e50; text-align: center;">${currentSurveyData.description}</h3>
-                     </div>`;
+    if (val === "כן") {
+        container.style.display = "block";
+        yesPart.style.display = "block";
+    } else if (val === "לא") {
+        container.style.display = "block";
+        yesPart.style.display = "none";
+    } else {
+        container.style.display = "none";
+    }
+}
+
+function handleFauxPasNext(qNum) {
+    const q1Val = document.getElementById(`fp_q1_${qNum}`).value;
+    
+    if (!q1Val) { showError("חובה לענות על שאלת הזיהוי (שאלה 1) לפני שממשיכים!"); return; }
+
+    const qObj = currentSurveyData.questions[qNum - 1];
+    let score = qObj.q1_scores[q1Val]; // מושך מה-JSON את הניקוד המתאים 0/1
+    
+    // איחוד כל השאלות הפתוחות לתוך תא אחד מסודר בגוגל שיטס
+    let combinedAnswer = `שאלת זיהוי: ${q1Val}`;
+    
+    if (q1Val === "כן") {
+        let q2Ans = document.getElementById(`fp_q2_${qNum}`).value.trim();
+        let q3Ans = document.getElementById(`fp_q3_${qNum}`).value.trim();
+        let q4Ans = document.getElementById(`fp_q4_${qNum}`).value.trim();
+        let q5Ans = document.getElementById(`fp_q5_${qNum}`).value.trim();
+        
+        if (!q2Ans || !q3Ans || !q4Ans || !q5Ans) { showError("אנא ענה/י על כל השאלות הפתוחות."); return; }
+        combinedAnswer += ` | מי אמר: ${q2Ans} | מדוע לא צריך: ${q3Ans} | מדוע אמר: ${q4Ans} | שאלת הבנה: ${q5Ans}`;
+    } else {
+        let q5Ans = document.getElementById(`fp_q5_${qNum}`).value.trim();
+        if (!q5Ans) { showError("אנא ענה/י על השאלה הפתוחה."); return; }
+        combinedAnswer += ` | שאלת הבנה: ${q5Ans}`;
     }
 
+    responses.Answers.push({ 
+        Question_Number: qNum, Question_Text: "סיפור " + qNum, Part: "",
+        Answer: combinedAnswer, Score: score, Time_Taken_Sec: Math.round((Date.now() - startTime) / 1000) 
+    });
+
+    if (qNum < totalQuestions) { switchPage('q' + qNum, 'q' + (qNum + 1)); startTime = Date.now(); } 
+    else { finalizeSurvey(); }
+}
+
+// פונקציית רינדור לשאלונים רגילים
+function renderRegularQuestions() {
+    const container = document.getElementById('survey-container'); 
+    let html = '';
     currentSurveyData.questions.forEach((qObj, index) => {
         const qNum = index + 1; 
         let optionsHtml = '';
         let qOptions = qObj.options || currentSurveyData.options;
-        
-        // הלולאה הזו רצה בסדר יורד - כך היא הופכת את התשובות (מ-8 עד 1 במקום 1 עד 8)
-        for (let optIndex = qOptions.length - 1; optIndex >= 0; optIndex--) {
-            const opt = qOptions[optIndex];
+        qOptions.forEach((opt, optIndex) => {
             const score = qObj.scores[optIndex]; 
             optionsHtml += `<label class="option"><input type="radio" name="ans${qNum}" value="${opt}" data-score="${score}"> ${opt}</label>`;
-        }
-        
-        let imageHtml = qObj.image ? `<img src="${qObj.image}" alt="שאלה ${qNum}" style="max-width: 100%; height: auto; display: block; margin: 15px auto; border: 2px solid #ccc; border-radius: 5px;">` : '';
-
+        });
         html += `
         <div id="q${qNum}" class="section">
-            ${descHtml}
-            <h2>שאלה ${qNum} מתוך ${totalQuestions} ${qObj.part ? '(חלק ' + qObj.part + ')' : ''}</h2>
-            ${imageHtml}
-            <p class="scenario-text">${qObj.text || ""}</p>
-            <div style="margin-top:10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
-                ${optionsHtml}
-            </div>
-            <br>
+            <h2>שאלה ${qNum} מתוך ${totalQuestions}</h2>
+            <p class="scenario-text">${qObj.text}</p>
+            <div style="margin-top:10px;">${optionsHtml}</div><br>
             <button class="btn btn-back" onclick="goBackToMain()">חזור למסך הראשי</button>
             <button class="btn" onclick="handleNext(${qNum})">${qNum < totalQuestions ? 'המשך לשאלה הבאה' : 'סיום ושליחה'}</button>
-        </div>
-        `;
+        </div>`;
     });
     container.innerHTML = html;
 }
 
-
-// ==========================================
-// 5. ניווט תוך כדי שאלון, חזרה לאחור ואיסוף נתונים
-// ==========================================
-function goBackToMain() { 
-    document.querySelector('.section.active')?.classList.remove('active'); 
-    document.getElementById('custom-confirm').classList.add('active'); 
-}
-
-function confirmBack() {
-    let hadConsent = responses["Consent_Agreed"]; 
-    responses = {}; 
-    if (hadConsent) responses["Consent_Agreed"] = hadConsent;
-    
-    document.getElementById('survey-container').innerHTML = ''; // מנקה את השאלות מהזיכרון
-    document.getElementById('custom-confirm').classList.remove('active'); 
-    document.getElementById('survey-selection').classList.add('active');
-}
-
-function cancelBack() {
-    document.getElementById('custom-confirm').classList.remove('active');
-    const questions = document.querySelectorAll('#survey-container .section');
-    for (let i = questions.length - 1; i >= 0; i--) {
-        if (responses.Answers && responses.Answers.length === i) { 
-            questions[i].classList.add('active'); return; 
+// פונקציית רינדור לרייבן
+function renderRavenQuestions() {
+    const container = document.getElementById('survey-container'); 
+    let html = '';
+    let descHtml = currentSurveyData.description ? `<div style="margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 5px;"><h3 style="margin: 0; color: #2c3e50; text-align: center;">${currentSurveyData.description}</h3></div>` : '';
+    currentSurveyData.questions.forEach((qObj, index) => {
+        const qNum = index + 1; 
+        let optionsHtml = '';
+        let qOptions = qObj.options || currentSurveyData.options;
+        for (let optIndex = qOptions.length - 1; optIndex >= 0; optIndex--) {
+            const opt = qOptions[optIndex]; const score = qObj.scores[optIndex]; 
+            optionsHtml += `<label class="option"><input type="radio" name="ans${qNum}" value="${opt}" data-score="${score}"> ${opt}</label>`;
         }
-    }
+        let imageHtml = qObj.image ? `<img src="${qObj.image}" alt="שאלה ${qNum}" style="max-width: 100%; height: auto; display: block; margin: 15px auto; border: 2px solid #ccc; border-radius: 5px;">` : '';
+        html += `
+        <div id="q${qNum}" class="section">${descHtml}<h2>שאלה ${qNum} מתוך ${totalQuestions} ${qObj.part ? '(חלק ' + qObj.part + ')' : ''}</h2>
+            ${imageHtml}<p class="scenario-text">${qObj.text || ""}</p>
+            <div style="margin-top:10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">${optionsHtml}</div><br>
+            <button class="btn btn-back" onclick="goBackToMain()">חזור למסך הראשי</button>
+            <button class="btn" onclick="handleNext(${qNum})">${qNum < totalQuestions ? 'המשך לשאלה הבאה' : 'סיום ושליחה'}</button>
+        </div>`;
+    });
+    container.innerHTML = html;
 }
+
+// ==========================================
+// 5. איסוף נתונים וחזרה למסך ראשי
+// ==========================================
+function goBackToMain() { document.querySelector('.section.active')?.classList.remove('active'); document.getElementById('custom-confirm').classList.add('active'); }
+function confirmBack() { let hadConsent = responses["Consent_Agreed"]; responses = {}; if (hadConsent) responses["Consent_Agreed"] = hadConsent; document.getElementById('survey-container').innerHTML = ''; document.getElementById('custom-confirm').classList.remove('active'); document.getElementById('survey-selection').classList.add('active'); }
+function cancelBack() { document.getElementById('custom-confirm').classList.remove('active'); const questions = document.querySelectorAll('#survey-container .section'); for (let i = questions.length - 1; i >= 0; i--) { if (responses.Answers && responses.Answers.length === i) { questions[i].classList.add('active'); return; } } }
 
 function handleNext(qNum) {
     const checkedRadio = document.getElementById('q' + qNum).querySelector('input[type="radio"]:checked');
     if (!checkedRadio) { showError("חובה לבחור תשובה לפני שממשיכים!"); return; }
     
     responses.Answers.push({ 
-        Question_Number: qNum, 
-        Question_Text: currentSurveyData.questions[qNum - 1].text || "תמונה", 
-        Part: currentSurveyData.questions[qNum - 1].part || "",
-        Answer: checkedRadio.value, 
-        Score: parseInt(checkedRadio.getAttribute('data-score')), 
-        Time_Taken_Sec: Math.round((Date.now() - startTime) / 1000) 
+        Question_Number: qNum, Question_Text: currentSurveyData.questions[qNum - 1].text || "תמונה", 
+        Part: currentSurveyData.questions[qNum - 1].part || "", Answer: checkedRadio.value, 
+        Score: parseInt(checkedRadio.getAttribute('data-score')), Time_Taken_Sec: Math.round((Date.now() - startTime) / 1000) 
     });
 
-    if (qNum < totalQuestions) { 
-        switchPage('q' + qNum, 'q' + (qNum + 1)); startTime = Date.now(); 
-    } else { finalizeSurvey(); }
+    if (qNum < totalQuestions) { switchPage('q' + qNum, 'q' + (qNum + 1)); startTime = Date.now(); } 
+    else { finalizeSurvey(); }
 }
 
-
 // ==========================================
-// 6. סיום שאלון ושליחה לגוגל
+// 6. סיום ושליחה לגוגל
 // ==========================================
 function finalizeSurvey() {
     responses["End_Time"] = new Date().toLocaleString();
@@ -306,17 +322,13 @@ function finalizeSurvey() {
     
     responses["Scores_Parts"] = { A: 0, B: 0, C: 0, D: 0, E: 0 };
     responses.Answers.forEach(ans => {
-        if (ans.Part && responses["Scores_Parts"][ans.Part] !== undefined) {
-            responses["Scores_Parts"][ans.Part] += ans.Score;
-        }
+        if (ans.Part && responses["Scores_Parts"][ans.Part] !== undefined) { responses["Scores_Parts"][ans.Part] += ans.Score; }
     });
 
     switchPage('q' + totalQuestions, 'success-msg'); 
     document.getElementById('success-msg').innerHTML = "<h2>שולח נתונים... אנא המתן...</h2>";
 
-    fetch(SCRIPT_URL, { 
-        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(responses) 
-    })
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(responses) })
     .then(() => {
         document.getElementById('success-msg').innerHTML = `
             <h2 style="color: #2ecc71;">תודה רבה!</h2>
@@ -326,27 +338,16 @@ function finalizeSurvey() {
     }).catch(error => { showError("אירעה שגיאה בשליחת הנתונים. אנא נסה שוב."); });
 }
 
-
-// ==========================================
-// 7. פונקציות עזר ותצוגה
-// ==========================================
 function returnToMainFromSuccess() {
-    let hadConsent = responses["Consent_Agreed"]; 
-    responses = {}; 
-    if (hadConsent) responses["Consent_Agreed"] = hadConsent;
-    
-    currentSurveyData = null; totalQuestions = 0; currentSurveyName = ""; 
-    document.getElementById('survey-container').innerHTML = '';
+    let hadConsent = responses["Consent_Agreed"]; responses = {}; if (hadConsent) responses["Consent_Agreed"] = hadConsent;
+    currentSurveyData = null; totalQuestions = 0; currentSurveyName = ""; document.getElementById('survey-container').innerHTML = '';
     switchPage('success-msg', 'survey-selection');
 }
 
 function showError(msg) {
-    const eb = document.getElementById('error-box'); 
-    eb.innerText = msg; eb.style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' }); 
-    setTimeout(() => { eb.style.display = 'none'; }, 3500);
+    const eb = document.getElementById('error-box'); eb.innerText = msg; eb.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => { eb.style.display = 'none'; }, 3500);
 }
-
 function switchPage(hideId, showId) {
     let hideEl = document.getElementById(hideId); let showEl = document.getElementById(showId);
     if(hideEl) hideEl.classList.remove('active'); if(showEl) showEl.classList.add('active');
