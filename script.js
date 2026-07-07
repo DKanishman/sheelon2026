@@ -136,7 +136,7 @@ function renderQuestions() {
     }
 }
 
-// פונקציה לשאלון 4 (הבנת סיטואציות - Faux Pas)
+// פונקציה לשאלון 4 (הבנת סיטואציות)
 function renderFauxPasQuestions() {
     const container = document.getElementById('survey-container'); 
     let html = '';
@@ -154,83 +154,148 @@ function renderFauxPasQuestions() {
         <div id="q${qNum}" class="section">
             <h2>שאלה ${qNum} מתוך ${totalQuestions}</h2>
             
-            <p class="scenario-text" style="font-size: 18px; font-weight: normal; line-height: 1.6; background: #fff; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
-                ${qObj.story}
-            </p>
+            <div style="background: #fff; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px;">
+                <p class="scenario-text" style="font-size: 18px; font-weight: normal; line-height: 1.6; padding: 15px; margin: 0;">
+                    ${qObj.story}
+                </p>
+                <div style="text-align: center; padding: 10px; border-top: 1px solid #eee; background: #fafafa;">
+                    <audio id="audio_${qNum}" src="sound/t4s${qNum}.mp3" type="audio/mpeg" preload="auto"></audio>
+                    <button id="btn_audio_${qNum}" class="btn btn-audio" style="background-color: #9b59b6; margin: 0; display: inline-flex; align-items: center; gap: 8px;" onclick="playStoryAudio(${qNum})">
+                        🔊 השמע סיפור
+                    </button>
+                </div>
+            </div>
             
-            <div style="margin-top:20px; background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 5px;">
-                <p style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">1. האם מישהו אמר משהו שהוא לא היה צריך להגיד?</p>
-                <select id="fp_q1_${qNum}" style="width: 100%; padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; font-family: 'Assistant';" onchange="handleFauxPasChange(${qNum})">
-                    <option value="">-- בחר/י תשובה --</option>
-                    <option value="כן">כן</option>
-                    <option value="לא">לא</option>
-                </select>
+            <div style="background: #fdfdfd; padding: 15px; border: 1px solid #eee; border-radius: 5px;">
+                
+                <div id="fp_step1_${qNum}">
+                    <p style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">1. האם מישהו אמר משהו שהוא לא היה צריך להגיד?</p>
+                    <select id="fp_q1_${qNum}" style="width: 100%; padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; font-family: 'Assistant';">
+                        <option value="">-- בחר/י תשובה --</option>
+                        <option value="כן">כן</option>
+                        <option value="לא">לא</option>
+                    </select>
+                    <button class="btn btn-start" style="margin-top: 15px;" onclick="nextFauxPasStep(${qNum}, 1)">המשך</button>
+                </div>
 
-                <div id="fp_open_questions_${qNum}" style="display: none; margin-top: 15px;">
-                    <div id="fp_yes_part_${qNum}">
-                        <p style="font-weight: bold; margin-bottom: 5px;">2. מי אמר משהו שהוא לא היה צריך להגיד?</p>
-                        <input type="text" id="fp_q2_${qNum}" placeholder="הכנס תשובה">
-                        
-                        <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">3. מדוע הוא/היא לא היה צריך להגיד זאת?</p>
-                        <input type="text" id="fp_q3_${qNum}" placeholder="הכנס תשובה">
-                        
-                        <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">4. מדוע הוא אמר זאת?</p>
-                        <input type="text" id="fp_q4_${qNum}" placeholder="הכנס תשובה">
+                <div id="fp_step2_${qNum}" style="display: none;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">2. מי אמר משהו שהוא לא היה צריך להגיד?</p>
+                    <input type="text" id="fp_q2_${qNum}" placeholder="הכנס/י תשובה כאן...">
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-back" style="flex: 1; margin: 0;" onclick="prevFauxPasStep(${qNum}, 2)">חזור אחורה</button>
+                        <button class="btn btn-start" style="flex: 1; margin: 0;" onclick="nextFauxPasStep(${qNum}, 2)">המשך</button>
                     </div>
+                </div>
 
-                    <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">5. ${qObj.q5}</p>
-                    <input type="text" id="fp_q5_${qNum}" placeholder="הכנס תשובה">
+                <div id="fp_step3_${qNum}" style="display: none;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">3. מדוע הוא/היא לא היה צריך להגיד זאת?</p>
+                    <input type="text" id="fp_q3_${qNum}" placeholder="הכנס/י תשובה כאן...">
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-back" style="flex: 1; margin: 0;" onclick="prevFauxPasStep(${qNum}, 3)">חזור אחורה</button>
+                        <button class="btn btn-start" style="flex: 1; margin: 0;" onclick="nextFauxPasStep(${qNum}, 3)">המשך</button>
+                    </div>
+                </div>
+
+                <div id="fp_step4_${qNum}" style="display: none;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">4. מדוע הוא אמר זאת?</p>
+                    <input type="text" id="fp_q4_${qNum}" placeholder="הכנס/י תשובה כאן...">
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-back" style="flex: 1; margin: 0;" onclick="prevFauxPasStep(${qNum}, 4)">חזור אחורה</button>
+                        <button class="btn btn-start" style="flex: 1; margin: 0;" onclick="nextFauxPasStep(${qNum}, 4)">המשך</button>
+                    </div>
+                </div>
+
+                <div id="fp_step5_${qNum}" style="display: none;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">5. ${qObj.q5}</p>
+                    <input type="text" id="fp_q5_${qNum}" placeholder="הכנס/י תשובה כאן...">
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-back" style="flex: 1; margin: 0;" onclick="prevFauxPasStep(${qNum}, 5)">חזור אחורה</button>
+                        <button class="btn btn-start" style="flex: 1; background-color: #27ae60; margin: 0;" onclick="handleFauxPasNext(${qNum})">${qNum < totalQuestions ? 'המשך לשאלה הבאה' : 'סיום ושליחה'}</button>
+                    </div>
                 </div>
             </div>
             
             <br>
             <button class="btn btn-back" onclick="goBackToMain()">חזור למסך הראשי</button>
-            <button class="btn" onclick="handleFauxPasNext(${qNum})">${qNum < totalQuestions ? 'המשך לשאלה הבאה' : 'סיום ושליחה'}</button>
         </div>
         `;
     });
     container.innerHTML = html;
 }
 
-// פונקציית שליטה בתצוגה של השאלות הפתוחות בהתאם לבחירת כן/לא
-function handleFauxPasChange(qNum) {
-    const val = document.getElementById(`fp_q1_${qNum}`).value;
-    const container = document.getElementById(`fp_open_questions_${qNum}`);
-    const yesPart = document.getElementById(`fp_yes_part_${qNum}`);
-    
-    if (val === "כן") {
-        container.style.display = "block";
-        yesPart.style.display = "block";
-    } else if (val === "לא") {
-        container.style.display = "block";
-        yesPart.style.display = "none";
+function playStoryAudio(qNum) {
+    let audioEl = document.getElementById(`audio_${qNum}`);
+    let btnEl = document.getElementById(`btn_audio_${qNum}`);
+    if (!audioEl) return;
+
+    if (audioEl.paused) {
+        document.querySelectorAll('audio').forEach(a => { if(a !== audioEl) { a.pause(); a.currentTime = 0; } });
+        document.querySelectorAll('.btn-audio').forEach(b => { b.innerHTML = '🔊 השמע סיפור'; });
+        audioEl.load();
+        let playPromise = audioEl.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => { btnEl.innerHTML = '⏸ עצור השמעה'; })
+            .catch(error => { showError("שגיאה: הקובץ לא נמצא. ודא שקיים קובץ בתיקיית sound."); });
+        }
     } else {
-        container.style.display = "none";
+        audioEl.pause();
+        btnEl.innerHTML = '🔊 השמע סיפור';
+    }
+    audioEl.onended = function() { btnEl.innerHTML = '🔊 השמע סיפור'; };
+}
+
+function nextFauxPasStep(qNum, currentStep) {
+    if (currentStep === 1) {
+        let val = document.getElementById(`fp_q1_${qNum}`).value;
+        if (!val) { showError("אנא בחר/י תשובה כדי להמשיך."); return; }
+        document.getElementById(`fp_step1_${qNum}`).style.display = 'none';
+        if (val === "כן") { document.getElementById(`fp_step2_${qNum}`).style.display = 'block'; } 
+        else { document.getElementById(`fp_step5_${qNum}`).style.display = 'block'; }
+    }
+    else if (currentStep === 2) {
+        let val = document.getElementById(`fp_q2_${qNum}`).value.trim();
+        if (!val) { showError("אנא ענה/י על השאלה כדי להמשיך."); return; }
+        document.getElementById(`fp_step2_${qNum}`).style.display = 'none'; document.getElementById(`fp_step3_${qNum}`).style.display = 'block';
+    }
+    else if (currentStep === 3) {
+        let val = document.getElementById(`fp_q3_${qNum}`).value.trim();
+        if (!val) { showError("אנא ענה/י על השאלה כדי להמשיך."); return; }
+        document.getElementById(`fp_step3_${qNum}`).style.display = 'none'; document.getElementById(`fp_step4_${qNum}`).style.display = 'block';
+    }
+    else if (currentStep === 4) {
+        let val = document.getElementById(`fp_q4_${qNum}`).value.trim();
+        if (!val) { showError("אנא ענה/י על השאלה כדי להמשיך."); return; }
+        document.getElementById(`fp_step4_${qNum}`).style.display = 'none'; document.getElementById(`fp_step5_${qNum}`).style.display = 'block';
+    }
+}
+
+function prevFauxPasStep(qNum, currentStep) {
+    if (currentStep === 2) { document.getElementById(`fp_step2_${qNum}`).style.display = 'none'; document.getElementById(`fp_step1_${qNum}`).style.display = 'block'; }
+    else if (currentStep === 3) { document.getElementById(`fp_step3_${qNum}`).style.display = 'none'; document.getElementById(`fp_step2_${qNum}`).style.display = 'block'; }
+    else if (currentStep === 4) { document.getElementById(`fp_step4_${qNum}`).style.display = 'none'; document.getElementById(`fp_step3_${qNum}`).style.display = 'block'; }
+    else if (currentStep === 5) {
+        document.getElementById(`fp_step5_${qNum}`).style.display = 'none';
+        let val = document.getElementById(`fp_q1_${qNum}`).value;
+        if (val === "כן") { document.getElementById(`fp_step4_${qNum}`).style.display = 'block'; } 
+        else { document.getElementById(`fp_step1_${qNum}`).style.display = 'block'; }
     }
 }
 
 function handleFauxPasNext(qNum) {
     const q1Val = document.getElementById(`fp_q1_${qNum}`).value;
-    
-    if (!q1Val) { showError("חובה לענות על שאלת הזיהוי (שאלה 1) לפני שממשיכים!"); return; }
-
     const qObj = currentSurveyData.questions[qNum - 1];
-    let score = qObj.q1_scores[q1Val]; // מושך מה-JSON את הניקוד המתאים 0/1
+    let score = qObj.q1_scores[q1Val]; 
     
-    // איחוד כל השאלות הפתוחות לתוך תא אחד מסודר בגוגל שיטס
     let combinedAnswer = `שאלת זיהוי: ${q1Val}`;
+    let q5Ans = document.getElementById(`fp_q5_${qNum}`).value.trim();
+    if (!q5Ans) { showError("אנא ענה/י על השאלה הפתוחה."); return; }
     
     if (q1Val === "כן") {
         let q2Ans = document.getElementById(`fp_q2_${qNum}`).value.trim();
         let q3Ans = document.getElementById(`fp_q3_${qNum}`).value.trim();
         let q4Ans = document.getElementById(`fp_q4_${qNum}`).value.trim();
-        let q5Ans = document.getElementById(`fp_q5_${qNum}`).value.trim();
-        
-        if (!q2Ans || !q3Ans || !q4Ans || !q5Ans) { showError("אנא ענה/י על כל השאלות הפתוחות."); return; }
         combinedAnswer += ` | מי אמר: ${q2Ans} | מדוע לא צריך: ${q3Ans} | מדוע אמר: ${q4Ans} | שאלת הבנה: ${q5Ans}`;
     } else {
-        let q5Ans = document.getElementById(`fp_q5_${qNum}`).value.trim();
-        if (!q5Ans) { showError("אנא ענה/י על השאלה הפתוחה."); return; }
         combinedAnswer += ` | שאלת הבנה: ${q5Ans}`;
     }
 
@@ -243,7 +308,8 @@ function handleFauxPasNext(qNum) {
     else { finalizeSurvey(); }
 }
 
-// פונקציית רינדור לשאלונים רגילים
+
+// פונקציית רינדור לשאלונים רגילים (כולל שאלון 5B)
 function renderRegularQuestions() {
     const container = document.getElementById('survey-container'); 
     let html = '';
@@ -349,6 +415,8 @@ function showError(msg) {
     window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => { eb.style.display = 'none'; }, 3500);
 }
 function switchPage(hideId, showId) {
+    document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; }); 
+    document.querySelectorAll('.btn-audio').forEach(b => { b.innerHTML = '🔊 השמע סיפור'; });
     let hideEl = document.getElementById(hideId); let showEl = document.getElementById(showId);
     if(hideEl) hideEl.classList.remove('active'); if(showEl) showEl.classList.add('active');
 }
