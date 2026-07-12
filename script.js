@@ -392,14 +392,30 @@ function handleFauxPasNext(qNum) {
 function renderRegularQuestions() {
     const container = document.getElementById('survey-container'); 
     let html = '';
+    
+    if (currentSurveyData.description) {
+        html += `<div style="margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 5px;"><h3 style="margin: 0; color: #2c3e50; text-align: center;">${currentSurveyData.description}</h3></div>`;
+    }
+
     currentSurveyData.questions.forEach((qObj, index) => {
         const qNum = index + 1; 
         let optionsHtml = '';
-        let qOptions = qObj.options || currentSurveyData.options;
-        qOptions.forEach((opt, optIndex) => {
-            const score = qObj.scores[optIndex]; 
-            optionsHtml += `<label class="option"><input type="radio" name="ans${qNum}" value="${opt}" data-score="${score}"> ${opt}</label>`;
-        });
+        let inputType = qObj.inputType || 'radio';
+
+        if (inputType === 'text') {
+            optionsHtml = `<textarea id="ans_text_${qNum}" rows="4" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; font-family:'Assistant'; font-size:16px; box-sizing:border-box;" placeholder="כתוב את תשובתך כאן..."></textarea>`;
+        } else {
+            let qOptions = qObj.options || currentSurveyData.options;
+            qOptions.forEach((opt, optIndex) => {
+                const score = (qObj.scores && qObj.scores[optIndex]) !== undefined ? qObj.scores[optIndex] : 0; 
+                if (inputType === 'checkbox') {
+                    optionsHtml += `<label class="option"><input type="checkbox" name="ans${qNum}" value="${opt}" data-score="${score}"> ${opt}</label>`;
+                } else {
+                    optionsHtml += `<label class="option"><input type="radio" name="ans${qNum}" value="${opt}" data-score="${score}"> ${opt}</label>`;
+                }
+            });
+        }
+        
         html += `
         <div id="q${qNum}" class="section">
             <h2>שאלה ${qNum} מתוך ${totalQuestions}</h2>
@@ -445,19 +461,49 @@ function confirmBack() { let hadConsent = responses["Consent_Agreed"]; responses
 function cancelBack() { document.getElementById('custom-confirm').classList.remove('active'); const questions = document.querySelectorAll('#survey-container .section'); for (let i = questions.length - 1; i >= 0; i--) { if (responses.Answers && responses.Answers.length === i) { questions[i].classList.add('active'); return; } } }
 
 function handleNext(qNum) {
-    const checkedRadio = document.getElementById('q' + qNum).querySelector('input[type="radio"]:checked');
-    if (!checkedRadio) { showError("חובה לבחור תשובה לפני שממשיכים!"); return; }
+    let qObj = currentSurveyData.questions[qNum - 1];
+    let inputType = qObj.inputType || 'radio';
+    let answerVal = '';
+    let scoreVal = 0;
+
+    // ניהול סוגי קלט שונים
+    if (inputType === 'text') {
+        let textEl = document.getElementById(`ans_text_${qNum}`);
+        answerVal = textEl.value.trim();
+        if (!answerVal) { showError("חובה לכתוב תשובה לפני שממשיכים!"); return; }
+        scoreVal = 0;
+    } else if (inputType === 'checkbox') {
+        let checkedBoxes = document.getElementById('q' + qNum).querySelectorAll('input[type="checkbox"]:checked');
+        if (checkedBoxes.length === 0) { showError("חובה לבחור לפחות תשובה אחת!"); return; }
+        let vals = [];
+        checkedBoxes.forEach(cb => { 
+            vals.push(cb.value); 
+            scoreVal += parseInt(cb.getAttribute('data-score')) || 0; 
+        });
+        answerVal = vals.join(" | "); // מפריד בתשובות עם קו אנכי (צינור) כדי שייכנס באקסל בתא אחד
+    } else {
+        const checkedRadio = document.getElementById('q' + qNum).querySelector('input[type="radio"]:checked');
+        if (!checkedRadio) { showError("חובה לבחור תשובה לפני שממשיכים!"); return; }
+        answerVal = checkedRadio.value;
+        scoreVal = parseInt(checkedRadio.getAttribute('data-score')) || 0;
+    }
     
     responses.Answers.push({ 
-        Question_Number: qNum, Question_Text: currentSurveyData.questions[qNum - 1].text || "תמונה", 
-        Part: currentSurveyData.questions[qNum - 1].part || "", Answer: checkedRadio.value, 
-        Score: parseInt(checkedRadio.getAttribute('data-score')), Time_Taken_Sec: Math.round((Date.now() - startTime) / 1000) 
+        Question_Number: qNum, 
+        Question_Text: qObj.text || "שאלה " + qNum, 
+        Part: qObj.part || "", 
+        Answer: answerVal, 
+        Score: scoreVal, 
+        Time_Taken_Sec: Math.round((Date.now() - startTime) / 1000) 
     });
 
-    if (qNum < totalQuestions) { switchPage('q' + qNum, 'q' + (qNum + 1)); startTime = Date.now(); } 
-    else { finalizeSurvey(); }
+    if (qNum < totalQuestions) { 
+        switchPage('q' + qNum, 'q' + (qNum + 1)); 
+        startTime = Date.now(); 
+    } else { 
+        finalizeSurvey(); 
+    }
 }
-
 // ==========================================
 // 6. סיום ושליחה לגוגל
 // ==========================================

@@ -1,0 +1,186 @@
+// מזהה תיקיית המחקר הראשית (מומלץ למלא כדי שתיקיות המשתתפים ייווצרו בצורה מסודרת)
+const TARGET_FOLDER_ID = ''; 
+
+function doPost(e) {
+  try {
+    var jsonData = JSON.parse(e.postData.contents);
+    var surveyType = jsonData.Survey_Type || "שאלון";
+    var participantName = jsonData.Participant_Name || "משתתף אנונימי";
+    var formattedDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd-MM-yyyy HH-mm");
+
+    // --- מערכת ניהול התיקיות החכמה ---
+    var parentFolder = DriveApp.getRootFolder(); 
+    if (TARGET_FOLDER_ID) {
+      try {
+        parentFolder = DriveApp.getFolderById(TARGET_FOLDER_ID);
+      } catch (folderError) {}
+    }
+
+    // חיפוש או יצירת תיקייה אישית על שם המשתתף
+    var participantFolder;
+    var folderIterator = parentFolder.getFoldersByName(participantName);
+    if (folderIterator.hasNext()) {
+      participantFolder = folderIterator.next(); 
+    } else {
+      participantFolder = parentFolder.createFolder(participantName); 
+    }
+
+    // --- 1. יצירת ושמירת קובץ הנתונים המפורט של השאלון הנוכחי ---
+    var fileName = surveyType + " - " + participantName + " - " + formattedDate;
+    var newSS = SpreadsheetApp.create(fileName);
+    var sheet = newSS.getActiveSheet();
+    sheet.setName("נתונים מפורטים");
+    
+    // העברת הקובץ לתיקיית הנבדק
+    var file = DriveApp.getFileById(newSS.getId());
+    file.moveTo(participantFolder);
+
+    // טיפול בטופס הסכמה מדעת
+    if (surveyType === "טופס הסכמה מדעת" && jsonData.Consent_Data) {
+      var consentHeaders = ["תאריך חתימה", "שם פרטי", "שם משפחה", "מספר תעודת זהות", "כתובת", "טלפון", "הסכמה מדעת"];
+      sheet.appendRow(consentHeaders);
+      sheet.getRange(1, 1, 1, consentHeaders.length).setFontWeight("bold").setBackground("#ffd966");
+
+      sheet.appendRow([
+        new Date(),
+        jsonData.Consent_Data.FirstName,
+        jsonData.Consent_Data.LastName,
+        jsonData.Consent_Data.ID,
+        jsonData.Consent_Data.Address,
+        jsonData.Consent_Data.Phone,
+        jsonData.Consent_Data.Agreed
+      ]);
+      sheet.autoResizeColumns(1, consentHeaders.length);
+
+    // טיפול בטופס קבלה
+    } else if (surveyType === "קבלה" && jsonData.Receipt_Data) {
+      var receiptHeaders = ["תאריך שליחה לשרת", "תאריך שהוזן בקבלה", "שם מלא", "תעודת זהות", "סכום קבלה", "הצהרת גמול קודם", "אישור חתימה חוקית"];
+      sheet.appendRow(receiptHeaders);
+      sheet.getRange(1, 1, 1, receiptHeaders.length).setFontWeight("bold").setBackground("#f6b26b");
+
+      sheet.appendRow([
+        new Date(),
+        jsonData.Receipt_Data.ReceiptDate,
+        jsonData.Receipt_Data.Name,
+        jsonData.Receipt_Data.ID,
+        jsonData.Receipt_Data.Amount,
+        jsonData.Receipt_Data.TaxDeclaration,
+        jsonData.Receipt_Data.Agreed
+      ]);
+      sheet.autoResizeColumns(1, receiptHeaders.length);
+
+    // טיפול בכל השאלונים (טבלה ארוכה)
+    } else {
+      var headers = [
+        "שם המשתתף", "שאלה", "חלק", "תשובה", "ציון", "זמן מענה (שניות)", "סוג שאלון", "ציון כולל",
+        "רייבן א", "רייבן ב", "רייבן ג", "רייבן ד", "רייבן ה",
+        "5 ציון א", "5 ציון מ", "5 ציון ש\"ר", "5 ציון נ\"ע", "5 ציון י", "5 ציון ז\"ע",
+        "5 ציון ת/א", "5 ציון נ\"מ", "5 ציון א\"ס", "5 BRI", "5 MI", "5 GEC", 
+        "5 ציון נ", "5 ציון ד", "5 ציון ח",
+        "שעת התחלה", "שעת סיום"
+      ];
+      sheet.appendRow(headers);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#c9daf8");
+
+      var scoreRA = jsonData.Scores_Parts ? jsonData.Scores_Parts.A : "";
+      var scoreRB = jsonData.Scores_Parts ? jsonData.Scores_Parts.B : "";
+      var scoreRC = jsonData.Scores_Parts ? jsonData.Scores_Parts.C : "";
+      var scoreRD = jsonData.Scores_Parts ? jsonData.Scores_Parts.D : "";
+      var scoreRE = jsonData.Scores_Parts ? jsonData.Scores_Parts.E : "";
+
+      var s5_A="", s5_M="", s5_SR="", s5_NE="", s5_I="", s5_ZE="", s5_TA="", s5_NM="", s5_AS="";
+      var s5_BRI="", s5_MI="", s5_GEC="", s5_N="", s5_D="", s5_H="";
+
+      if (surveyType.includes("שאלון 5")) {
+        function getQScore(qNum) {
+            if (!jsonData.Answers) return 0;
+            for(var k=0; k<jsonData.Answers.length; k++) {
+                if(jsonData.Answers[k].Question_Number === qNum) return jsonData.Answers[k].Score;
+            }
+            return 0;
+        }
+        s5_A = [5,16,29,36,43,55,58,73].reduce((a,b)=>a+getQScore(b),0);
+        s5_M = [8,22,32,44,61,67].reduce((a,b)=>a+getQScore(b),0);
+        s5_SR = [1,12,19,28,33,42,51,57,69,72].reduce((a,b)=>a+getQScore(b),0);
+        s5_NE = [13,23,37,50,64,70].reduce((a,b)=>a+getQScore(b),0);
+        s5_I = [6,14,20,25,45,49,53,62].reduce((a,b)=>a+getQScore(b),0);
+        s5_ZE = [4,11,17,26,35,46,54,56,68].reduce((a,b)=>a+getQScore(b),0);
+        s5_TA = [9,15,21,34,39,47,63,66,71].reduce((a,b)=>a+getQScore(b),0);
+        s5_NM = [2,18,24,30,31,41,52,75].reduce((a,b)=>a+getQScore(b),0);
+        s5_AS = [3,7,40,60,65,74].reduce((a,b)=>a+getQScore(b),0);
+        s5_BRI = s5_A + s5_M + s5_SR + s5_NE;
+        s5_MI = s5_I + s5_ZE + s5_TA + s5_NM + s5_AS;
+        s5_GEC = s5_BRI + s5_MI;
+        var n_qs = [1, 8, 19, 21, 22, 23, 29, 36, 39, 40];
+        s5_N = n_qs.filter(q => getQScore(q) === 3).length;
+        s5_D = (getQScore(10)===3?1:0) + (getQScore(27)===1?1:0) + (getQScore(38)===3?1:0) + (getQScore(48)===1?1:0) + (getQScore(59)===1?1:0);
+        s5_H = Math.abs(getQScore(2)-getQScore(41)) + Math.abs(getQScore(25)-getQScore(49)) + 
+               Math.abs(getQScore(28)-getQScore(42)) + Math.abs(getQScore(33)-getQScore(72)) + 
+               Math.abs(getQScore(34)-getQScore(63)) + Math.abs(getQScore(44)-getQScore(61)) + 
+               Math.abs(getQScore(46)-getQScore(56)) + Math.abs(getQScore(52)-getQScore(75)) + 
+               Math.abs(getQScore(60)-getQScore(74)) + Math.abs(getQScore(64)-getQScore(70));
+      }
+
+      if (jsonData.Answers && jsonData.Answers.length > 0) {
+        for (var i = 0; i < jsonData.Answers.length; i++) {
+          var ans = jsonData.Answers[i];
+          sheet.appendRow([
+            participantName, ans.Question_Text || "שאלה " + ans.Question_Number, ans.Part || "",
+            ans.Answer, ans.Score, ans.Time_Taken_Sec, surveyType, jsonData.Total_Score,
+            scoreRA, scoreRB, scoreRC, scoreRD, scoreRE, s5_A, s5_M, s5_SR, s5_NE, s5_I, s5_ZE, s5_TA, s5_NM, s5_AS, 
+            s5_BRI, s5_MI, s5_GEC, s5_N, s5_D, s5_H, jsonData.Start_Time, jsonData.End_Time
+          ]);
+        }
+      } else {
+        sheet.appendRow([participantName, "לא נמצאו שאלות", "", "", "", "", "", ""]);
+      }
+      sheet.autoResizeColumns(1, headers.length);
+    }
+
+    // --- 2. יצירה או עדכון של טבלת "סיכום ציונים" בתיקיית הנבדק ---
+    var summaryFileName = "סיכום ציונים - " + participantName;
+    var summaryFiles = participantFolder.getFilesByName(summaryFileName);
+    var summarySheet;
+    
+    if (summaryFiles.hasNext()) {
+      // קובץ הסיכום כבר קיים מהשאלון הקודם, נפתח אותו
+      var summaryFile = summaryFiles.next();
+      summarySheet = SpreadsheetApp.openById(summaryFile.getId()).getActiveSheet();
+    } else {
+      // שאלון ראשון: ניצור קובץ סיכום חדש ונעביר לתיקייה
+      var newSummarySS = SpreadsheetApp.create(summaryFileName);
+      var newSummaryFile = DriveApp.getFileById(newSummarySS.getId());
+      newSummaryFile.moveTo(participantFolder);
+      summarySheet = newSummarySS.getActiveSheet();
+      summarySheet.setName("ריכוז שאלונים");
+      
+      // יצירת הכותרות
+      summarySheet.appendRow(["שם השאלון", "ציון סופי"]);
+      summarySheet.getRange("A1:B1").setFontWeight("bold").setBackground("#d9ead3");
+    }
+    
+    // קביעת הציון הסופי או המילה "בוצע" בהתאם לסוג הטופס
+    var finalScoreText;
+    if (surveyType === "טופס הסכמה מדעת" || surveyType === "קבלה") {
+      finalScoreText = "בוצע";
+    } else {
+      finalScoreText = (jsonData.Total_Score !== undefined) ? jsonData.Total_Score : 0;
+    }
+
+    // הוספת השורה של השאלון שבוצע הרגע והציון שלו
+    summarySheet.appendRow([surveyType, finalScoreText]);
+    summarySheet.autoResizeColumns(1, 2);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "success", 
+      "message": "קובץ נוצר בתיקיית הנבדק וסיכום הציונים עודכן",
+      "fileUrl": newSS.getUrl()
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "error", 
+      "message": error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
