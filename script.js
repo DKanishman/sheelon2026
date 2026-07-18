@@ -4,12 +4,15 @@ let currentSurveyData = null;
 let totalQuestions = 0;
 let currentSurveyName = "";
 
-// *** חובה להדביק כאן את הקישור שקיבלת מגוגל שיטס! ***
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-6UTuvAo7kbnnra1VDwNzmTISYMnn3K3YNt5Y-QVyl3vxMYZ3mk_XtdSbTNbVcjfs/exec'; 
+// משתני מצב לשאלון 5A
+let ds_part = 'A';
+let ds_itemIdx = 0;
+let ds_lastCorrectA = 0;
+let ds_lastCorrectB = 0;
 
-// ==========================================
-// 1. ניהול טופס הסכמה מדעת
-// ==========================================
+// *** חובה להדביק כאן את הקישור שקיבלת מגוגל שיטס! ***
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBcAQIwzi1PsL02Z3dMr7u7tE-k8gyrjY_WGoJKZYQrQIIAYu1hQ1V7zkCvFadDorr/exec'; 
+
 function openConsentForm() { switchPage('survey-selection', 'full-consent-screen'); }
 
 function submitConsentForm() {
@@ -42,9 +45,6 @@ function submitConsentForm() {
     }).catch(error => { showError("אירעה שגיאה בשליחת הנתונים."); switchPage('success-msg', 'full-consent-screen'); });
 }
 
-// ==========================================
-// 2. ניהול טופס קבלה לסיום המחקר
-// ==========================================
 function openReceiptForm() { switchPage('survey-selection', 'receipt-screen'); }
 
 function updateTaxDeclaration() {
@@ -83,18 +83,28 @@ function submitReceiptForm() {
     }).catch(error => { showError("אירעה שגיאה בשליחת הנתונים."); switchPage('success-msg', 'receipt-screen'); });
 }
 
-// ==========================================
-// 3. ניווט והתחלת שאלון
-// ==========================================
 function selectSurvey(surveyId) {
     const fetchUrl = 'questions.json?t=' + new Date().getTime();
     fetch(fetchUrl)
         .then(response => { if(!response.ok) throw new Error("File not found"); return response.json(); })
         .then(data => {
             currentSurveyData = data[surveyId]; 
-            totalQuestions = currentSurveyData.questions.length; 
+            if(currentSurveyData.type === 'digit_span') {
+                totalQuestions = currentSurveyData.parts.A.items.length + currentSurveyData.parts.B.items.length;
+            } else {
+                totalQuestions = currentSurveyData.questions.length; 
+            }
             currentSurveyName = currentSurveyData.title;
             document.getElementById('survey-title-display').innerText = currentSurveyName; 
+
+            // הצגת שדה גיל רק אם נבחר שאלון 5A או 5B
+            if (surveyId === 'survey5' || surveyId === 'survey5A') {
+                document.getElementById('age-container').style.display = 'block';
+            } else {
+                document.getElementById('age-container').style.display = 'none';
+                document.getElementById('age').value = ''; // ניקוי שדה הגיל במקרה של שאלון אחר
+            }
+
             document.getElementById('confidentialityCheck').checked = false;
             switchPage('survey-selection', 'confidentiality-screen');
         })
@@ -109,23 +119,40 @@ function proceedToIntro() {
 function startSurvey() {
     let first = document.getElementById('firstName').value.trim();
     let last = document.getElementById('lastName').value.trim();
+    let age = "";
+    
+    // בדיקה האם דרוש גיל עבור השאלון הספציפי הזה
+    let requiresAge = (currentSurveyName.includes("5A") || currentSurveyName.includes("5B") || currentSurveyName.includes("שאלון 5"));
 
-    if(!first || !last) { showError("נא למלא שם ושם משפחה כדי להתחיל."); return; }
+    if (requiresAge) {
+        age = document.getElementById('age').value.trim();
+        if(!first || !last || !age) { showError("נא למלא שם, משפחה וגיל כדי להתחיל."); return; }
+    } else {
+        if(!first || !last) { showError("נא למלא שם ושם משפחה כדי להתחיל."); return; }
+    }
+
     responses["Survey_Type"] = currentSurveyName; 
     responses["Participant_Name"] = first + " " + last; 
+    responses["Age"] = age;
     responses["Start_Time"] = new Date().toLocaleString();
     if(!responses["Consent_Agreed"]) { responses["Consent_Agreed"] = "טרם מולא טופס מלא"; }
     responses["Answers"] = []; 
     responses["Total_Score"] = 0;
 
     renderQuestions(); 
-    switchPage('intro', 'q1'); 
+
+    if (currentSurveyData.type === 'digit_span') {
+        ds_part = 'A';
+        ds_itemIdx = 0;
+        ds_lastCorrectA = 0;
+        ds_lastCorrectB = 0;
+        switchPage('intro', 'ds_sec_A_0');
+    } else {
+        switchPage('intro', 'q1'); 
+    }
     startTime = Date.now(); 
 }
 
-// ==========================================
-// 4. רינדור לפי סוג השאלון
-// ==========================================
 function renderQuestions() {
     if (currentSurveyData.type === "faux_pas") {
         renderFauxPasQuestions();
@@ -133,12 +160,154 @@ function renderQuestions() {
         renderRavenQuestions();
     } else if (currentSurveyData.type === "vocabulary") {
         renderVocabularyQuestions();
+    } else if (currentSurveyData.type === "digit_span") {
+        renderDigitSpanQuestions();
     } else {
         renderRegularQuestions();
     }
 }
 
-// שאלון 4 (Faux Pas)
+// ============================================================
+// מנגנון שאלון 5A (זכירת ספרות - Digit Span)
+// ============================================================
+function renderDigitSpanQuestions() {
+    const container = document.getElementById('survey-container');
+    let html = '';
+    
+    if (currentSurveyData.description) {
+        html += `<div style="margin-bottom: 20px; background: #e8f4f8; padding: 15px; border-radius: 5px;"><h3 style="margin: 0; color: #2c3e50; text-align: center;">${currentSurveyData.description}</h3></div>`;
+    }
+
+    ['A', 'B'].forEach(part => {
+        let partData = currentSurveyData.parts[part];
+        partData.items.forEach((item, index) => {
+            html += `
+            <div id="ds_sec_${part}_${index}" class="section">
+                <h2 style="color: #2980b9;">${partData.title} - פריט ${index + 1}</h2>
+                <p class="scenario-text">${partData.instruction}</p>
+                
+                <!-- נסיון 1 -->
+                <div style="background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0;">נסיון 1</h4>
+                    <audio id="audio_ds_${part}_${index}_1" src="sound/s5a_${part}_${index}_1.mp3" type="audio/mpeg" preload="auto"></audio>
+                    <button id="btn_ds_${part}_${index}_1" class="btn" style="background-color: #9b59b6; margin-top:0;" onclick="playDigitSpanAudio('${part}', ${index}, 1)">🔊 לחץ פעם אחת להשמעת המספרים</button>
+                    <div id="timer_ds_${part}_${index}_1" style="color: #e74c3c; font-weight: bold; margin: 10px 0; font-size: 16px;"></div>
+                    <input type="text" id="input_ds_${part}_${index}_1" disabled placeholder="הכנס את המספרים כאן לאחר סיום ההשמעה...">
+                </div>
+
+                <!-- נסיון 2 -->
+                <div style="background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0;">נסיון 2</h4>
+                    <audio id="audio_ds_${part}_${index}_2" src="sound/s5a_${part}_${index}_2.mp3" type="audio/mpeg" preload="auto"></audio>
+                    <button id="btn_ds_${part}_${index}_2" class="btn" style="background-color: #9b59b6; margin-top:0;" onclick="playDigitSpanAudio('${part}', ${index}, 2)">🔊 לחץ פעם אחת להשמעת המספרים</button>
+                    <div id="timer_ds_${part}_${index}_2" style="color: #e74c3c; font-weight: bold; margin: 10px 0; font-size: 16px;"></div>
+                    <input type="text" id="input_ds_${part}_${index}_2" disabled placeholder="הכנס את המספרים כאן לאחר סיום ההשמעה...">
+                </div>
+
+                <button class="btn btn-back" onclick="goBackToMain()">חזור למסך הראשי</button>
+                <button class="btn btn-start" style="background-color: #27ae60;" onclick="nextDigitSpanItem('${part}', ${index})">שמור והמשך</button>
+            </div>`;
+        });
+    });
+
+    container.innerHTML = html;
+}
+
+function playDigitSpanAudio(part, index, trial) {
+    let audioEl = document.getElementById(`audio_ds_${part}_${index}_${trial}`);
+    let btnEl = document.getElementById(`btn_ds_${part}_${index}_${trial}`);
+    let inputEl = document.getElementById(`input_ds_${part}_${index}_${trial}`);
+    let timerEl = document.getElementById(`timer_ds_${part}_${index}_${trial}`);
+
+    if (!audioEl) return;
+    
+    btnEl.disabled = true;
+    btnEl.innerText = "ההקלטה הושמעה";
+    btnEl.style.backgroundColor = "#ccc";
+
+    let playPromise = audioEl.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            showError(`שגיאה בהפעלת האודיו. ייתכן שהקובץ sound/s5a_${part}_${index}_${trial}.mp3 חסר.`);
+            inputEl.disabled = false;
+        });
+    }
+
+    audioEl.onended = function() {
+        inputEl.disabled = false;
+        inputEl.focus();
+        let timeLeft = 60;
+        timerEl.innerText = `נותרו ${timeLeft} שניות להקלדה`;
+        
+        let timerInterval = setInterval(() => {
+            timeLeft--;
+            if(timeLeft > 0) {
+                timerEl.innerText = `נותרו ${timeLeft} שניות להקלדה`;
+            } else {
+                clearInterval(timerInterval);
+                inputEl.disabled = true;
+                timerEl.innerText = "הזמן עבר! לא ניתן להקליד יותר.";
+            }
+        }, 1000);
+        
+        inputEl.setAttribute('data-timer', timerInterval);
+    };
+}
+
+function nextDigitSpanItem(part, idx) {
+    let t1Timer = document.getElementById(`input_ds_${part}_${idx}_1`).getAttribute('data-timer');
+    let t2Timer = document.getElementById(`input_ds_${part}_${idx}_2`).getAttribute('data-timer');
+    if (t1Timer) clearInterval(t1Timer);
+    if (t2Timer) clearInterval(t2Timer);
+
+    let t1Input = document.getElementById(`input_ds_${part}_${idx}_1`).value.replace(/[^0-9]/g, '');
+    let t2Input = document.getElementById(`input_ds_${part}_${idx}_2`).value.replace(/[^0-9]/g, '');
+    
+    let t1Target = currentSurveyData.parts[part].items[idx].t1;
+    let t2Target = currentSurveyData.parts[part].items[idx].t2;
+
+    let score1 = (t1Input === t1Target) ? 1 : 0;
+    let score2 = (t2Input === t2Target) ? 1 : 0;
+    let itemScore = score1 + score2;
+
+    if (itemScore > 0) {
+        if (part === 'A') ds_lastCorrectA = idx + 1;
+        else ds_lastCorrectB = idx + 1;
+    }
+
+    responses.Answers.push({
+        Question_Number: idx + 1,
+        Question_Text: `פריט ${idx + 1}`,
+        Part: part,
+        Answer: `נסיון 1: ${t1Input || '[ריק]'} | נסיון 2: ${t2Input || '[ריק]'}`,
+        Score: itemScore,
+        Time_Taken_Sec: Math.round((Date.now() - startTime) / 1000)
+    });
+
+    if (itemScore === 0) {
+        if (part === 'A') {
+            switchPage(`ds_sec_A_${idx}`, `ds_sec_B_0`);
+            startTime = Date.now();
+        } else {
+            finalizeSurvey();
+        }
+    } else {
+        let nextIdx = idx + 1;
+        if (nextIdx < currentSurveyData.parts[part].items.length) {
+            switchPage(`ds_sec_${part}_${idx}`, `ds_sec_${part}_${nextIdx}`);
+            startTime = Date.now();
+        } else {
+            if (part === 'A') {
+                switchPage(`ds_sec_A_${idx}`, `ds_sec_B_0`);
+                startTime = Date.now();
+            } else {
+                finalizeSurvey();
+            }
+        }
+    }
+}
+// ============================================================
+
 function renderFauxPasQuestions() {
     const container = document.getElementById('survey-container'); 
     let html = '';
@@ -189,7 +358,6 @@ function renderFauxPasQuestions() {
     container.innerHTML = html;
 }
 
-// שאלון 6 (אוצר מילים - Vocabulary) - תומך ב- WAV
 function renderVocabularyQuestions() {
     const container = document.getElementById('survey-container');
     let html = '';
@@ -210,7 +378,6 @@ function renderVocabularyQuestions() {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h3 style="margin: 0; font-size: 20px;">${word.id}. ${word.text}</h3>
                     <div>
-                        <!-- עודכן לנתיב של wav והשמות המתאימים -->
                         <audio id="audio_v_${word.id}" src="sound/t6s${word.id}.wav" type="audio/wav" preload="auto"></audio>
                         <button id="btn_audio_v_${word.id}" class="btn btn-audio" style="background-color: #9b59b6; margin: 0; padding: 8px 15px; font-size: 14px;" onclick="playVocabAudio(${word.id})">
                             🔊 השמע
@@ -233,7 +400,6 @@ function renderVocabularyQuestions() {
     container.innerHTML = html;
 }
 
-// ניהול שמע לאוצר מילים
 function playVocabAudio(wordId) {
     let audioEl = document.getElementById(`audio_v_${wordId}`);
     let btnEl = document.getElementById(`btn_audio_v_${wordId}`);
@@ -243,7 +409,7 @@ function playVocabAudio(wordId) {
         document.querySelectorAll('audio').forEach(a => { if(a !== audioEl) { a.pause(); a.currentTime = 0; } });
         document.querySelectorAll('.btn-audio').forEach(b => {
             if (b.id.startsWith('btn_audio_v_')) b.innerHTML = '🔊 השמע';
-            else b.innerHTML = '🔊 השמע סיפור';
+            else if (b.id.startsWith('btn_audio_')) b.innerHTML = '🔊 השמע סיפור';
         });
         audioEl.load();
         let playPromise = audioEl.play();
@@ -251,7 +417,6 @@ function playVocabAudio(wordId) {
             playPromise.then(() => { btnEl.innerHTML = '⏸ עצור'; })
             .catch(error => { 
                 showError("שגיאה: הקובץ לא נמצא. ודא שקיים קובץ בשם t6s" + wordId + ".wav בתיקיית sound."); 
-                console.error(error);
             });
         }
     } else {
@@ -261,7 +426,6 @@ function playVocabAudio(wordId) {
     audioEl.onended = function() { btnEl.innerHTML = '🔊 השמע'; };
 }
 
-// טיפול במעבר עמוד בשאלון אוצר מילים
 function handleVocabNext(pageNum) {
     const pageObj = currentSurveyData.questions[pageNum - 1];
     let allFilled = true;
@@ -299,7 +463,6 @@ function handleVocabNext(pageNum) {
     }
 }
 
-// פונקציות עזר לשאלון 4
 function playStoryAudio(qNum) {
     let audioEl = document.getElementById(`audio_${qNum}`);
     let btnEl = document.getElementById(`btn_audio_${qNum}`);
@@ -309,7 +472,7 @@ function playStoryAudio(qNum) {
         document.querySelectorAll('audio').forEach(a => { if(a !== audioEl) { a.pause(); a.currentTime = 0; } });
         document.querySelectorAll('.btn-audio').forEach(b => { 
             if (b.id.startsWith('btn_audio_v_')) b.innerHTML = '🔊 השמע';
-            else b.innerHTML = '🔊 השמע סיפור'; 
+            else if (b.id.startsWith('btn_audio_')) b.innerHTML = '🔊 השמע סיפור'; 
         });
         audioEl.load();
         let playPromise = audioEl.play();
@@ -388,7 +551,6 @@ function handleFauxPasNext(qNum) {
     else { finalizeSurvey(); }
 }
 
-// שאלונים רגילים
 function renderRegularQuestions() {
     const container = document.getElementById('survey-container'); 
     let html = '';
@@ -428,7 +590,6 @@ function renderRegularQuestions() {
     container.innerHTML = html;
 }
 
-// שאלון רייבן
 function renderRavenQuestions() {
     const container = document.getElementById('survey-container'); 
     let html = '';
@@ -453,12 +614,28 @@ function renderRavenQuestions() {
     container.innerHTML = html;
 }
 
-// ==========================================
-// 5. איסוף נתונים וחזרה למסך ראשי
-// ==========================================
 function goBackToMain() { document.querySelector('.section.active')?.classList.remove('active'); document.getElementById('custom-confirm').classList.add('active'); }
-function confirmBack() { let hadConsent = responses["Consent_Agreed"]; responses = {}; if (hadConsent) responses["Consent_Agreed"] = hadConsent; document.getElementById('survey-container').innerHTML = ''; document.getElementById('custom-confirm').classList.remove('active'); document.getElementById('survey-selection').classList.add('active'); }
-function cancelBack() { document.getElementById('custom-confirm').classList.remove('active'); const questions = document.querySelectorAll('#survey-container .section'); for (let i = questions.length - 1; i >= 0; i--) { if (responses.Answers && responses.Answers.length === i) { questions[i].classList.add('active'); return; } } }
+
+function confirmBack() { 
+    let hadConsent = responses["Consent_Agreed"]; 
+    responses = {}; 
+    if (hadConsent) responses["Consent_Agreed"] = hadConsent; 
+    document.getElementById('survey-container').innerHTML = ''; 
+    document.getElementById('custom-confirm').classList.remove('active'); 
+    document.getElementById('survey-selection').classList.add('active'); 
+}
+
+function cancelBack() { 
+    document.getElementById('custom-confirm').classList.remove('active'); 
+    if (currentSurveyData.type === 'digit_span') {
+        document.getElementById(`ds_sec_${ds_part}_${ds_itemIdx}`).classList.add('active');
+    } else {
+        const questions = document.querySelectorAll('#survey-container .section'); 
+        for (let i = questions.length - 1; i >= 0; i--) { 
+            if (responses.Answers && responses.Answers.length === i) { questions[i].classList.add('active'); return; } 
+        } 
+    }
+}
 
 function handleNext(qNum) {
     let qObj = currentSurveyData.questions[qNum - 1];
@@ -466,7 +643,6 @@ function handleNext(qNum) {
     let answerVal = '';
     let scoreVal = 0;
 
-    // ניהול סוגי קלט שונים
     if (inputType === 'text') {
         let textEl = document.getElementById(`ans_text_${qNum}`);
         answerVal = textEl.value.trim();
@@ -480,7 +656,7 @@ function handleNext(qNum) {
             vals.push(cb.value); 
             scoreVal += parseInt(cb.getAttribute('data-score')) || 0; 
         });
-        answerVal = vals.join(" | "); // מפריד בתשובות עם קו אנכי (צינור) כדי שייכנס באקסל בתא אחד
+        answerVal = vals.join(" | "); 
     } else {
         const checkedRadio = document.getElementById('q' + qNum).querySelector('input[type="radio"]:checked');
         if (!checkedRadio) { showError("חובה לבחור תשובה לפני שממשיכים!"); return; }
@@ -504,9 +680,7 @@ function handleNext(qNum) {
         finalizeSurvey(); 
     }
 }
-// ==========================================
-// 6. סיום ושליחה לגוגל
-// ==========================================
+
 function finalizeSurvey() {
     responses["End_Time"] = new Date().toLocaleString();
     responses["Total_Score"] = responses.Answers.reduce((sum, ans) => sum + ans.Score, 0);
@@ -516,7 +690,12 @@ function finalizeSurvey() {
         if (ans.Part && responses["Scores_Parts"][ans.Part] !== undefined) { responses["Scores_Parts"][ans.Part] += ans.Score; }
     });
 
-    switchPage('q' + totalQuestions, 'success-msg'); 
+    if (currentSurveyData.type === 'digit_span') {
+        responses["s5a_lastA"] = ds_lastCorrectA;
+        responses["s5a_lastB"] = ds_lastCorrectB;
+    }
+
+    switchPage(document.querySelector('.section.active').id, 'success-msg'); 
     document.getElementById('success-msg').innerHTML = "<h2>שולח נתונים... אנא המתן...</h2>";
 
     fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(responses) })
@@ -539,12 +718,10 @@ function showError(msg) {
     const eb = document.getElementById('error-box'); eb.innerText = msg; eb.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => { eb.style.display = 'none'; }, 3500);
 }
+
 function switchPage(hideId, showId) {
     document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; }); 
-    document.querySelectorAll('.btn-audio').forEach(b => { 
-        if (b.id.startsWith('btn_audio_v_')) b.innerHTML = '🔊 השמע';
-        else b.innerHTML = '🔊 השמע סיפור'; 
-    });
+    
     let hideEl = document.getElementById(hideId); let showEl = document.getElementById(showId);
     if(hideEl) hideEl.classList.remove('active'); if(showEl) showEl.classList.add('active');
 }
