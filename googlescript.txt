@@ -1,4 +1,4 @@
-// מזהה תיקיית המחקר הראשית (מומלץ למלא כדי שתיקיות המשתתפים ייווצרו בצורה מסודרת)
+// מזהה תיקיית המחקר הראשית
 const TARGET_FOLDER_ID = ''; 
 
 function doPost(e) {
@@ -6,17 +6,14 @@ function doPost(e) {
     var jsonData = JSON.parse(e.postData.contents);
     var surveyType = jsonData.Survey_Type || "שאלון";
     var participantName = jsonData.Participant_Name || "משתתף אנונימי";
+    var age = jsonData.Age || "";
     var formattedDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd-MM-yyyy HH-mm");
 
-    // --- מערכת ניהול התיקיות החכמה ---
     var parentFolder = DriveApp.getRootFolder(); 
     if (TARGET_FOLDER_ID) {
-      try {
-        parentFolder = DriveApp.getFolderById(TARGET_FOLDER_ID);
-      } catch (folderError) {}
+      try { parentFolder = DriveApp.getFolderById(TARGET_FOLDER_ID); } catch (folderError) {}
     }
 
-    // חיפוש או יצירת תיקייה אישית על שם המשתתף
     var participantFolder;
     var folderIterator = parentFolder.getFoldersByName(participantName);
     if (folderIterator.hasNext()) {
@@ -25,59 +22,56 @@ function doPost(e) {
       participantFolder = parentFolder.createFolder(participantName); 
     }
 
-    // --- 1. יצירת ושמירת קובץ הנתונים המפורט של השאלון הנוכחי ---
     var fileName = surveyType + " - " + participantName + " - " + formattedDate;
     var newSS = SpreadsheetApp.create(fileName);
     var sheet = newSS.getActiveSheet();
     sheet.setName("נתונים מפורטים");
     
-    // העברת הקובץ לתיקיית הנבדק
     var file = DriveApp.getFileById(newSS.getId());
     file.moveTo(participantFolder);
 
-    // טיפול בטופס הסכמה מדעת
     if (surveyType === "טופס הסכמה מדעת" && jsonData.Consent_Data) {
       var consentHeaders = ["תאריך חתימה", "שם פרטי", "שם משפחה", "מספר תעודת זהות", "כתובת", "טלפון", "הסכמה מדעת"];
       sheet.appendRow(consentHeaders);
       sheet.getRange(1, 1, 1, consentHeaders.length).setFontWeight("bold").setBackground("#ffd966");
 
       sheet.appendRow([
-        new Date(),
-        jsonData.Consent_Data.FirstName,
-        jsonData.Consent_Data.LastName,
-        jsonData.Consent_Data.ID,
-        jsonData.Consent_Data.Address,
-        jsonData.Consent_Data.Phone,
-        jsonData.Consent_Data.Agreed
+        new Date(), jsonData.Consent_Data.FirstName, jsonData.Consent_Data.LastName,
+        jsonData.Consent_Data.ID, jsonData.Consent_Data.Address, jsonData.Consent_Data.Phone, jsonData.Consent_Data.Agreed
       ]);
       sheet.autoResizeColumns(1, consentHeaders.length);
 
-    // טיפול בטופס קבלה
     } else if (surveyType === "קבלה" && jsonData.Receipt_Data) {
       var receiptHeaders = ["תאריך שליחה לשרת", "תאריך שהוזן בקבלה", "שם מלא", "תעודת זהות", "סכום קבלה", "הצהרת גמול קודם", "אישור חתימה חוקית"];
       sheet.appendRow(receiptHeaders);
       sheet.getRange(1, 1, 1, receiptHeaders.length).setFontWeight("bold").setBackground("#f6b26b");
 
       sheet.appendRow([
-        new Date(),
-        jsonData.Receipt_Data.ReceiptDate,
-        jsonData.Receipt_Data.Name,
-        jsonData.Receipt_Data.ID,
-        jsonData.Receipt_Data.Amount,
-        jsonData.Receipt_Data.TaxDeclaration,
-        jsonData.Receipt_Data.Agreed
+        new Date(), jsonData.Receipt_Data.ReceiptDate, jsonData.Receipt_Data.Name,
+        jsonData.Receipt_Data.ID, jsonData.Receipt_Data.Amount, jsonData.Receipt_Data.TaxDeclaration, jsonData.Receipt_Data.Agreed
       ]);
       sheet.autoResizeColumns(1, receiptHeaders.length);
 
-    // טיפול בכל השאלונים (טבלה ארוכה)
     } else {
+      // עדכון הכותרות לכלול את ציון ה-T לכל מדד
       var headers = [
-        "שם המשתתף", "שאלה", "חלק", "תשובה", "ציון", "זמן מענה (שניות)", "סוג שאלון", "ציון כולל",
-        "רייבן א", "רייבן ב", "רייבן ג", "רייבן ד", "רייבן ה",
-        "5 ציון א", "5 ציון מ", "5 ציון ש\"ר", "5 ציון נ\"ע", "5 ציון י", "5 ציון ז\"ע",
-        "5 ציון ת/א", "5 ציון נ\"מ", "5 ציון א\"ס", "5 BRI", "5 MI", "5 GEC", 
-        "5 ציון נ", "5 ציון ד", "5 ציון ח",
-        "שעת התחלה", "שעת סיום"
+        "שם המשתתף", "גיל", "סוג שאלון", "שעת התחלה", "שעת סיום",
+        "5A ציון א", "5A ציון ב", "5A סהכ", "5A ציון תקן", "5A סטטוס", "5A פריט אחרון א", "5A פריט אחרון ב",
+        "5B ציון נ", "5B ציון ד", "5B ציון ח",
+        "5B ציון א", "5B T-א",
+        "5B ציון מ", "5B T-מ",
+        "5B ציון ש\"ר", "5B T-ש\"ר",
+        "5B ציון נ\"ע", "5B T-נ\"ע",
+        "5B ציון י", "5B T-י",
+        "5B ציון ז\"ע", "5B T-ז\"ע",
+        "5B ציון ת/א", "5B T-ת/א",
+        "5B ציון נ\"מ", "5B T-נ\"מ",
+        "5B ציון א\"ס", "5B T-א\"ס",
+        "5B BRI", "5B T-BRI",
+        "5B MI", "5B T-MI",
+        "5B GEC", "5B T-GEC",
+        "ציון כולל", "שאלה", "חלק", "תשובה", "ציון", "זמן מענה (שניות)", 
+        "רייבן א", "רייבן ב", "רייבן ג", "רייבן ד", "רייבן ה"
       ];
       sheet.appendRow(headers);
       sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#c9daf8");
@@ -88,10 +82,15 @@ function doPost(e) {
       var scoreRD = jsonData.Scores_Parts ? jsonData.Scores_Parts.D : "";
       var scoreRE = jsonData.Scores_Parts ? jsonData.Scores_Parts.E : "";
 
-      var s5_A="", s5_M="", s5_SR="", s5_NE="", s5_I="", s5_ZE="", s5_TA="", s5_NM="", s5_AS="";
-      var s5_BRI="", s5_MI="", s5_GEC="", s5_N="", s5_D="", s5_H="";
+      // משתנים לשאלון 5B
+      var s5b_A="", s5b_M="", s5b_SR="", s5b_NE="", s5b_I="", s5b_ZE="", s5b_TA="", s5b_NM="", s5b_AS="";
+      var s5b_BRI="", s5b_MI="", s5b_GEC="", s5b_N="", s5b_D="", s5b_H="";
+      var t_A="", t_M="", t_SR="", t_NE="", t_I="", t_ZE="", t_TA="", t_NM="", t_AS="", t_BRI="", t_MI="", t_GEC="";
+      
+      // משתנים לשאלון 5A
+      var s5a_A="", s5a_B="", s5a_Total="", s5a_T="", s5a_Status="", s5a_lastA="", s5a_lastB="";
 
-      if (surveyType.includes("שאלון 5")) {
+      if (surveyType.includes("שאלון 5B") || surveyType.includes("שאלון 5 (")) {
         function getQScore(qNum) {
             if (!jsonData.Answers) return 0;
             for(var k=0; k<jsonData.Answers.length; k++) {
@@ -99,88 +98,205 @@ function doPost(e) {
             }
             return 0;
         }
-        s5_A = [5,16,29,36,43,55,58,73].reduce((a,b)=>a+getQScore(b),0);
-        s5_M = [8,22,32,44,61,67].reduce((a,b)=>a+getQScore(b),0);
-        s5_SR = [1,12,19,28,33,42,51,57,69,72].reduce((a,b)=>a+getQScore(b),0);
-        s5_NE = [13,23,37,50,64,70].reduce((a,b)=>a+getQScore(b),0);
-        s5_I = [6,14,20,25,45,49,53,62].reduce((a,b)=>a+getQScore(b),0);
-        s5_ZE = [4,11,17,26,35,46,54,56,68].reduce((a,b)=>a+getQScore(b),0);
-        s5_TA = [9,15,21,34,39,47,63,66,71].reduce((a,b)=>a+getQScore(b),0);
-        s5_NM = [2,18,24,30,31,41,52,75].reduce((a,b)=>a+getQScore(b),0);
-        s5_AS = [3,7,40,60,65,74].reduce((a,b)=>a+getQScore(b),0);
-        s5_BRI = s5_A + s5_M + s5_SR + s5_NE;
-        s5_MI = s5_I + s5_ZE + s5_TA + s5_NM + s5_AS;
-        s5_GEC = s5_BRI + s5_MI;
+        s5b_A = [5,16,29,36,43,55,58,73].reduce((a,b)=>a+getQScore(b),0);
+        s5b_M = [8,22,32,44,61,67].reduce((a,b)=>a+getQScore(b),0);
+        s5b_SR = [1,12,19,28,33,42,51,57,69,72].reduce((a,b)=>a+getQScore(b),0);
+        s5b_NE = [13,23,37,50,64,70].reduce((a,b)=>a+getQScore(b),0);
+        s5b_I = [6,14,20,25,45,49,53,62].reduce((a,b)=>a+getQScore(b),0);
+        s5b_ZE = [4,11,17,26,35,46,54,56,68].reduce((a,b)=>a+getQScore(b),0);
+        s5b_TA = [9,15,21,34,39,47,63,66,71].reduce((a,b)=>a+getQScore(b),0);
+        s5b_NM = [2,18,24,30,31,41,52,75].reduce((a,b)=>a+getQScore(b),0);
+        s5b_AS = [3,7,40,60,65,74].reduce((a,b)=>a+getQScore(b),0);
+        s5b_BRI = s5b_A + s5b_M + s5b_SR + s5b_NE;
+        s5b_MI = s5b_I + s5b_ZE + s5b_TA + s5b_NM + s5b_AS;
+        s5b_GEC = s5b_BRI + s5b_MI;
+        
         var n_qs = [1, 8, 19, 21, 22, 23, 29, 36, 39, 40];
-        s5_N = n_qs.filter(q => getQScore(q) === 3).length;
-        s5_D = (getQScore(10)===3?1:0) + (getQScore(27)===1?1:0) + (getQScore(38)===3?1:0) + (getQScore(48)===1?1:0) + (getQScore(59)===1?1:0);
-        s5_H = Math.abs(getQScore(2)-getQScore(41)) + Math.abs(getQScore(25)-getQScore(49)) + 
-               Math.abs(getQScore(28)-getQScore(42)) + Math.abs(getQScore(33)-getQScore(72)) + 
-               Math.abs(getQScore(34)-getQScore(63)) + Math.abs(getQScore(44)-getQScore(61)) + 
-               Math.abs(getQScore(46)-getQScore(56)) + Math.abs(getQScore(52)-getQScore(75)) + 
-               Math.abs(getQScore(60)-getQScore(74)) + Math.abs(getQScore(64)-getQScore(70));
+        s5b_N = n_qs.filter(q => getQScore(q) === 3).length;
+        s5b_D = (getQScore(10)===3?1:0) + (getQScore(27)===1?1:0) + (getQScore(38)===3?1:0) + (getQScore(48)===1?1:0) + (getQScore(59)===1?1:0);
+        s5b_H = Math.abs(getQScore(2)-getQScore(41)) + Math.abs(getQScore(25)-getQScore(49)) + 
+                Math.abs(getQScore(28)-getQScore(42)) + Math.abs(getQScore(33)-getQScore(72)) + 
+                Math.abs(getQScore(34)-getQScore(63)) + Math.abs(getQScore(44)-getQScore(61)) + 
+                Math.abs(getQScore(46)-getQScore(56)) + Math.abs(getQScore(52)-getQScore(75)) + 
+                Math.abs(getQScore(60)-getQScore(74)) + Math.abs(getQScore(64)-getQScore(70));
+               
+        // חישוב ציון T עבור כל מדד
+        t_A = calculateTScore(age, "A", s5b_A);
+        t_M = calculateTScore(age, "M", s5b_M);
+        t_SR = calculateTScore(age, "SR", s5b_SR);
+        t_NE = calculateTScore(age, "NE", s5b_NE);
+        t_I = calculateTScore(age, "I", s5b_I);
+        t_ZE = calculateTScore(age, "ZE", s5b_ZE);
+        t_TA = calculateTScore(age, "TA", s5b_TA);
+        t_NM = calculateTScore(age, "NM", s5b_NM);
+        t_AS = calculateTScore(age, "AS", s5b_AS);
+        t_BRI = calculateTScore(age, "BRI", s5b_BRI);
+        t_MI = calculateTScore(age, "MI", s5b_MI);
+        t_GEC = calculateTScore(age, "GEC", s5b_GEC);
+      }
+
+      if (surveyType.includes("שאלון 5A")) {
+        s5a_A = 0; s5a_B = 0;
+        if (jsonData.Answers) {
+          jsonData.Answers.forEach(function(ans) {
+            if(ans.Part === "A") s5a_A += ans.Score;
+            if(ans.Part === "B") s5a_B += ans.Score;
+          });
+        }
+        s5a_Total = s5a_A + s5a_B;
+        s5a_T = calculateDigitSpanStandardScore(age, s5a_Total);
+        s5a_Status = (s5a_T < 7) ? "לא תקין" : (s5a_T > 13 ? "מעל הנורמה" : "תקין");
+        s5a_lastA = jsonData.s5a_lastA || 0;
+        s5a_lastB = jsonData.s5a_lastB || 0;
       }
 
       if (jsonData.Answers && jsonData.Answers.length > 0) {
         for (var i = 0; i < jsonData.Answers.length; i++) {
           var ans = jsonData.Answers[i];
           sheet.appendRow([
-            participantName, ans.Question_Text || "שאלה " + ans.Question_Number, ans.Part || "",
-            ans.Answer, ans.Score, ans.Time_Taken_Sec, surveyType, jsonData.Total_Score,
-            scoreRA, scoreRB, scoreRC, scoreRD, scoreRE, s5_A, s5_M, s5_SR, s5_NE, s5_I, s5_ZE, s5_TA, s5_NM, s5_AS, 
-            s5_BRI, s5_MI, s5_GEC, s5_N, s5_D, s5_H, jsonData.Start_Time, jsonData.End_Time
+            participantName, age, surveyType, jsonData.Start_Time, jsonData.End_Time,
+            s5a_A, s5a_B, s5a_Total, s5a_T, s5a_Status, s5a_lastA, s5a_lastB,
+            s5b_N, s5b_D, s5b_H,
+            s5b_A, t_A, s5b_M, t_M, s5b_SR, t_SR, s5b_NE, t_NE, 
+            s5b_I, t_I, s5b_ZE, t_ZE, s5b_TA, t_TA, s5b_NM, t_NM, 
+            s5b_AS, t_AS, s5b_BRI, t_BRI, s5b_MI, t_MI, s5b_GEC, t_GEC,
+            jsonData.Total_Score,
+            ans.Question_Text || "שאלה " + ans.Question_Number, ans.Part || "", ans.Answer, ans.Score, ans.Time_Taken_Sec, 
+            scoreRA, scoreRB, scoreRC, scoreRD, scoreRE
           ]);
         }
       } else {
-        sheet.appendRow([participantName, "לא נמצאו שאלות", "", "", "", "", "", ""]);
+        var emptyRow = new Array(headers.length).fill("");
+        emptyRow[0] = participantName; emptyRow[1] = age; emptyRow[2] = surveyType; 
+        emptyRow[3] = jsonData.Start_Time; emptyRow[4] = jsonData.End_Time;
+        emptyRow[40] = "לא נמצאו שאלות";
+        sheet.appendRow(emptyRow);
       }
       sheet.autoResizeColumns(1, headers.length);
     }
 
-    // --- 2. יצירה או עדכון של טבלת "סיכום ציונים" בתיקיית הנבדק ---
+    // --- יצירה או עדכון של טבלת "סיכום ציונים" ---
     var summaryFileName = "סיכום ציונים - " + participantName;
     var summaryFiles = participantFolder.getFilesByName(summaryFileName);
     var summarySheet;
     
     if (summaryFiles.hasNext()) {
-      // קובץ הסיכום כבר קיים מהשאלון הקודם, נפתח אותו
       var summaryFile = summaryFiles.next();
       summarySheet = SpreadsheetApp.openById(summaryFile.getId()).getActiveSheet();
     } else {
-      // שאלון ראשון: ניצור קובץ סיכום חדש ונעביר לתיקייה
       var newSummarySS = SpreadsheetApp.create(summaryFileName);
       var newSummaryFile = DriveApp.getFileById(newSummarySS.getId());
       newSummaryFile.moveTo(participantFolder);
       summarySheet = newSummarySS.getActiveSheet();
       summarySheet.setName("ריכוז שאלונים");
       
-      // יצירת הכותרות
       summarySheet.appendRow(["שם השאלון", "ציון סופי"]);
       summarySheet.getRange("A1:B1").setFontWeight("bold").setBackground("#d9ead3");
     }
     
-    // קביעת הציון הסופי או המילה "בוצע" בהתאם לסוג הטופס
     var finalScoreText;
     if (surveyType === "טופס הסכמה מדעת" || surveyType === "קבלה") {
       finalScoreText = "בוצע";
+    } else if (surveyType.includes("שאלון 5B") || surveyType.includes("שאלון 5 (")) {
+      finalScoreText = "נ: " + s5b_N + " | ד: " + s5b_D + " | ח: " + s5b_H + " | T: " + t_GEC;
+    } else if (surveyType.includes("שאלון 5A")) {
+      finalScoreText = "א: " + s5a_A + " | ב: " + s5a_B + " | ציון תקן: " + s5a_T + " (" + s5a_Status + ")";
     } else {
       finalScoreText = (jsonData.Total_Score !== undefined) ? jsonData.Total_Score : 0;
     }
 
-    // הוספת השורה של השאלון שבוצע הרגע והציון שלו
     summarySheet.appendRow([surveyType, finalScoreText]);
     summarySheet.autoResizeColumns(1, 2);
 
-    return ContentService.createTextOutput(JSON.stringify({
-      "status": "success", 
-      "message": "קובץ נוצר בתיקיית הנבדק וסיכום הציונים עודכן",
-      "fileUrl": newSS.getUrl()
-    })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ "status": "success", "fileUrl": newSS.getUrl() })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      "status": "error", 
-      "message": error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// -------------------------------------------------------------
+// פונקציית המרת ציון גלם לציון T לכל המדדים (שאלון 5B)
+// חשוב: יש להשלים את המספרים מתוך ה-PDF במקומות הריקים במילון
+// -------------------------------------------------------------
+function calculateTScore(ageStr, scaleName, rawScore) {
+  if (!ageStr || rawScore === undefined || rawScore === "") return "";
+  var age = parseInt(ageStr, 10);
+  if (isNaN(age)) return "";
+
+  var group = "";
+  if (age >= 18 && age <= 29) group = "18-29";
+  else if (age >= 30 && age <= 39) group = "30-39";
+  else if (age >= 40 && age <= 49) group = "40-49";
+  else if (age >= 50 && age <= 59) group = "50-59";
+  else if (age >= 60 && age <= 69) group = "60-69";
+  else if (age >= 70 && age <= 79) group = "70-79";
+  else if (age >= 80 && age <= 90) group = "80-90";
+
+  // כאן יש להזין את הנתונים מטבלאות ה-PDF לפי מדדים
+  // A=אינהיביציה, M=מעברים, SR=שליטה רגשית, NE=ניטור עצמי, I=יזימה, 
+  // ZE=זיכרון עובד, TA=תכנון/ארגון, NM=ניטור משימה, AS=ארגון הסביבה
+  var norms = {
+    "18-29": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} },
+    "30-39": { 
+      "A": { 
+        // דוגמה להזנה מתוך ה-PDF שסיפקת: "17": 68
+        "17": 68,
+        "18": 71,
+        "19": 75,
+        "20": 78,
+        "21": 82
+        // נא להמשיך להזין את כל הערכים מהטבלה...
+      }, 
+      "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} 
+    },
+    "40-49": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} },
+    "50-59": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} },
+    "60-69": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} },
+    "70-79": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} },
+    "80-90": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} }
+  };
+
+  if (group && norms[group] && norms[group][scaleName] && norms[group][scaleName][rawScore] !== undefined) {
+    return norms[group][scaleName][rawScore];
+  }
+  return rawScore + " (לא הוזן בטבלה)";
+}
+
+// פונקצית עזר - המרת ציון גלם זכירת ספרות 5A (מקס 30) לציון תקן
+function calculateDigitSpanStandardScore(ageStr, rawScore) {
+  if (!ageStr || rawScore === undefined) return "";
+  var age = parseInt(ageStr, 10);
+  if (isNaN(age)) return "";
+
+  var stdScore = 0;
+  if (age >= 16 && age <= 17) {
+    if(rawScore <= 2) stdScore = 1; else if(rawScore <= 4) stdScore = 2; else if(rawScore <= 6) stdScore = 3; else if(rawScore <= 8) stdScore = 4; else if(rawScore <= 10) stdScore = 5; else if(rawScore <= 12) stdScore = 6; else if(rawScore === 13) stdScore = 7; else if(rawScore <= 15) stdScore = 8; else if(rawScore === 16) stdScore = 9; else if(rawScore <= 18) stdScore = 10; else if(rawScore === 19) stdScore = 11; else if(rawScore === 20) stdScore = 12; else if(rawScore <= 22) stdScore = 13; else if(rawScore === 23) stdScore = 14; else if(rawScore === 24) stdScore = 15; else if(rawScore === 25) stdScore = 16; else if(rawScore === 26) stdScore = 17; else if(rawScore === 27) stdScore = 18; else stdScore = 19;
+  } else if (age >= 18 && age <= 19) {
+    if(rawScore <= 3) stdScore = 1; else if(rawScore <= 5) stdScore = 2; else if(rawScore <= 7) stdScore = 3; else if(rawScore <= 9) stdScore = 4; else if(rawScore === 10) stdScore = 5; else if(rawScore <= 12) stdScore = 6; else if(rawScore === 13) stdScore = 7; else if(rawScore <= 15) stdScore = 8; else if(rawScore === 16) stdScore = 9; else if(rawScore <= 18) stdScore = 10; else if(rawScore === 19) stdScore = 11; else if(rawScore === 20) stdScore = 12; else if(rawScore <= 22) stdScore = 13; else if(rawScore === 23) stdScore = 14; else if(rawScore <= 25) stdScore = 15; else if(rawScore === 26) stdScore = 16; else if(rawScore === 27) stdScore = 17; else if(rawScore === 28) stdScore = 18; else stdScore = 19;
+  } else if (age >= 20 && age <= 24) {
+    if(rawScore <= 3) stdScore = 1; else if(rawScore <= 5) stdScore = 2; else if(rawScore <= 7) stdScore = 3; else if(rawScore <= 9) stdScore = 4; else if(rawScore === 10) stdScore = 5; else if(rawScore <= 12) stdScore = 6; else if(rawScore === 13) stdScore = 7; else if(rawScore <= 15) stdScore = 8; else if(rawScore === 16) stdScore = 9; else if(rawScore <= 18) stdScore = 10; else if(rawScore === 19) stdScore = 11; else if(rawScore <= 21) stdScore = 12; else if(rawScore === 22) stdScore = 13; else if(rawScore === 23) stdScore = 14; else if(rawScore <= 25) stdScore = 15; else if(rawScore === 26) stdScore = 16; else if(rawScore === 27) stdScore = 17; else if(rawScore === 28) stdScore = 18; else stdScore = 19;
+  } else if (age >= 25 && age <= 29) {
+    if(rawScore === 0) stdScore = 1; else if(rawScore === 1) stdScore = 2; else if(rawScore <= 3) stdScore = 3; else if(rawScore <= 5) stdScore = 4; else if(rawScore <= 7) stdScore = 5; else if(rawScore <= 9) stdScore = 6; else if(rawScore <= 11) stdScore = 7; else if(rawScore <= 13) stdScore = 8; else if(rawScore === 14) stdScore = 9; else if(rawScore <= 16) stdScore = 10; else if(rawScore <= 18) stdScore = 11; else if(rawScore === 19) stdScore = 12; else if(rawScore <= 21) stdScore = 13; else if(rawScore === 22) stdScore = 14; else if(rawScore === 23) stdScore = 15; else if(rawScore <= 25) stdScore = 16; else if(rawScore === 26) stdScore = 17; else if(rawScore === 27) stdScore = 18; else stdScore = 19;
+  } else if (age >= 30 && age <= 34) {
+    if(rawScore <= 2) stdScore = 1; else if(rawScore <= 4) stdScore = 2; else if(rawScore <= 6) stdScore = 3; else if(rawScore <= 8) stdScore = 4; else if(rawScore <= 10) stdScore = 5; else if(rawScore === 11) stdScore = 6; else if(rawScore <= 13) stdScore = 7; else if(rawScore === 14) stdScore = 8; else if(rawScore <= 16) stdScore = 9; else if(rawScore === 17) stdScore = 10; else if(rawScore <= 19) stdScore = 11; else if(rawScore === 20) stdScore = 12; else if(rawScore === 21) stdScore = 13; else if(rawScore <= 23) stdScore = 14; else if(rawScore === 24) stdScore = 15; else if(rawScore === 25) stdScore = 16; else if(rawScore <= 27) stdScore = 17; else if(rawScore === 28) stdScore = 18; else stdScore = 19;
+  } else if (age >= 35 && age <= 44) {
+    if(rawScore <= 2) stdScore = 1; else if(rawScore <= 4) stdScore = 2; else if(rawScore <= 6) stdScore = 3; else if(rawScore <= 8) stdScore = 4; else if(rawScore <= 10) stdScore = 5; else if(rawScore === 11) stdScore = 6; else if(rawScore <= 13) stdScore = 7; else if(rawScore === 14) stdScore = 8; else if(rawScore <= 16) stdScore = 9; else if(rawScore === 17) stdScore = 10; else if(rawScore <= 19) stdScore = 11; else if(rawScore === 20) stdScore = 12; else if(rawScore === 21) stdScore = 13; else if(rawScore <= 23) stdScore = 14; else if(rawScore === 24) stdScore = 15; else if(rawScore === 25) stdScore = 16; else if(rawScore <= 27) stdScore = 17; else if(rawScore === 28) stdScore = 18; else stdScore = 19;
+  } else if (age >= 45 && age <= 54) {
+    if(rawScore <= 2) stdScore = 1; else if(rawScore <= 4) stdScore = 2; else if(rawScore <= 6) stdScore = 3; else if(rawScore <= 8) stdScore = 4; else if(rawScore <= 10) stdScore = 5; else if(rawScore === 11) stdScore = 6; else if(rawScore <= 13) stdScore = 7; else if(rawScore === 14) stdScore = 8; else if(rawScore <= 16) stdScore = 9; else if(rawScore === 17) stdScore = 10; else if(rawScore <= 19) stdScore = 11; else if(rawScore === 20) stdScore = 12; else if(rawScore === 21) stdScore = 13; else if(rawScore <= 23) stdScore = 14; else if(rawScore === 24) stdScore = 15; else if(rawScore === 25) stdScore = 16; else if(rawScore <= 27) stdScore = 17; else if(rawScore === 28) stdScore = 18; else stdScore = 19;
+  } else if (age >= 55 && age <= 64) {
+    if(rawScore <= 1) stdScore = 1; else if(rawScore <= 3) stdScore = 2; else if(rawScore <= 5) stdScore = 3; else if(rawScore <= 7) stdScore = 4; else if(rawScore === 8) stdScore = 5; else if(rawScore <= 10) stdScore = 6; else if(rawScore <= 12) stdScore = 7; else if(rawScore === 13) stdScore = 8; else if(rawScore <= 15) stdScore = 9; else if(rawScore === 16) stdScore = 10; else if(rawScore <= 18) stdScore = 11; else if(rawScore === 19) stdScore = 12; else if(rawScore <= 21) stdScore = 13; else if(rawScore === 22) stdScore = 14; else if(rawScore <= 24) stdScore = 15; else if(rawScore === 25) stdScore = 16; else if(rawScore === 26) stdScore = 17; else if(rawScore === 27) stdScore = 18; else stdScore = 19;
+  } else if (age >= 65 && age <= 69) {
+    if(rawScore <= 1) stdScore = 1; else if(rawScore === 2) stdScore = 2; else if(rawScore <= 4) stdScore = 3; else if(rawScore === 5) stdScore = 4; else if(rawScore <= 7) stdScore = 5; else if(rawScore <= 9) stdScore = 6; else if(rawScore <= 11) stdScore = 7; else if(rawScore <= 13) stdScore = 8; else if(rawScore <= 15) stdScore = 9; else if(rawScore === 16) stdScore = 10; else if(rawScore === 17) stdScore = 11; else if(rawScore <= 19) stdScore = 12; else if(rawScore === 20) stdScore = 13; else if(rawScore <= 22) stdScore = 14; else if(rawScore === 23) stdScore = 15; else if(rawScore === 24) stdScore = 16; else if(rawScore === 25) stdScore = 17; else if(rawScore === 26) stdScore = 18; else stdScore = 19;
+  } else if (age >= 70 && age <= 74) {
+    if(rawScore <= 1) stdScore = 1; else if(rawScore <= 3) stdScore = 2; else if(rawScore <= 5) stdScore = 3; else if(rawScore <= 7) stdScore = 4; else if(rawScore === 8) stdScore = 5; else if(rawScore <= 10) stdScore = 6; else if(rawScore === 11) stdScore = 7; else if(rawScore <= 13) stdScore = 8; else if(rawScore === 14) stdScore = 9; else if(rawScore === 15) stdScore = 10; else if(rawScore <= 17) stdScore = 11; else if(rawScore === 18) stdScore = 12; else if(rawScore === 19) stdScore = 13; else if(rawScore <= 21) stdScore = 14; else if(rawScore === 22) stdScore = 15; else if(rawScore === 23) stdScore = 16; else if(rawScore === 24) stdScore = 17; else if(rawScore === 25) stdScore = 18; else stdScore = 19;
+  } else if (age >= 75 && age <= 79) {
+    if(rawScore <= 1) stdScore = 1; else if(rawScore <= 3) stdScore = 2; else if(rawScore <= 5) stdScore = 3; else if(rawScore <= 7) stdScore = 4; else if(rawScore === 8) stdScore = 5; else if(rawScore <= 10) stdScore = 6; else if(rawScore === 11) stdScore = 7; else if(rawScore === 12) stdScore = 8; else if(rawScore <= 14) stdScore = 9; else if(rawScore === 15) stdScore = 10; else if(rawScore === 16) stdScore = 11; else if(rawScore <= 18) stdScore = 12; else if(rawScore === 19) stdScore = 13; else if(rawScore === 20) stdScore = 14; else if(rawScore === 21) stdScore = 15; else if(rawScore === 22) stdScore = 16; else if(rawScore === 23) stdScore = 17; else if(rawScore === 24) stdScore = 18; else stdScore = 19;
+  } else if (age >= 80 && age <= 84) {
+    if(rawScore === 0) stdScore = 1; else if(rawScore <= 2) stdScore = 2; else if(rawScore <= 4) stdScore = 3; else if(rawScore === 5) stdScore = 4; else if(rawScore === 6) stdScore = 5; else if(rawScore <= 8) stdScore = 6; else if(rawScore === 9) stdScore = 7; else if(rawScore === 10) stdScore = 8; else if(rawScore <= 12) stdScore = 9; else if(rawScore <= 14) stdScore = 10; else if(rawScore <= 16) stdScore = 11; else if(rawScore <= 18) stdScore = 12; else if(rawScore === 19) stdScore = 13; else if(rawScore === 20) stdScore = 14; else if(rawScore === 21) stdScore = 15; else if(rawScore === 22) stdScore = 16; else if(rawScore === 23) stdScore = 17; else stdScore = 19;
+  } else if (age >= 85 && age <= 90) {
+    if(rawScore === 0) stdScore = 1; else if(rawScore <= 2) stdScore = 2; else if(rawScore <= 4) stdScore = 3; else if(rawScore === 5) stdScore = 4; else if(rawScore === 6) stdScore = 5; else if(rawScore <= 8) stdScore = 6; else if(rawScore <= 10) stdScore = 7; else if(rawScore === 11) stdScore = 8; else if(rawScore <= 13) stdScore = 9; else if(rawScore === 14) stdScore = 10; else if(rawScore === 15) stdScore = 11; else if(rawScore === 16) stdScore = 12; else if(rawScore === 17) stdScore = 13; else if(rawScore === 18) stdScore = 14; else if(rawScore === 19) stdScore = 15; else if(rawScore === 20) stdScore = 16; else if(rawScore === 21) stdScore = 17; else if(rawScore === 22) stdScore = 18; else stdScore = 19;
+  }
+  
+  return stdScore;
 }

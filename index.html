@@ -30,11 +30,12 @@
             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
             <p class="scenario-text">שאלונים למילוי:</p>
 
+            <button class="btn btn-survey" style="background-color: #8e44ad;" onclick="selectSurvey('surveyPAB')">📄 שאלון PAB (שאלון מקדים)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey1')">📄 שאלון 1 (50 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey2')">📄 שאלון 2 (18 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey3')">📄 שאלון 3 (60 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey4')">📄 שאלון 4 (20 סיפורים)</button>
-            <!-- <button class="btn btn-survey" onclick="selectSurvey('survey5A')">📄 שאלון 5A (15 שאלות)</button> -->
+            <!-- <button class="btn btn-survey" onclick="selectSurvey('survey5A')">📄 שאלון 5A (זכירת ספרות)</button> -->
             <button class="btn btn-survey" onclick="selectSurvey('survey5')">📄 שאלון 5B (75 שאלות)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey6')">📄 שאלון 6 (33 מילים)</button>
             <button class="btn btn-survey" onclick="selectSurvey('survey7')">📄 שאלון 7 (7 שאלות)</button>
@@ -53,16 +54,11 @@
         <h2>הסכמה מדעת להשתתפות במחקר</h2>
         <div class="consent-box" style="height: 250px; text-align: right;">
             <p><strong>שלום רב,</strong><br>
-            אנו מזמינים אותך להשתתף במחקר העוסק בהערכת היכולות הפרגמטיות לצורך פיתוח תכניות התערבות מותאמות אישית. תוכניות אלו יתבססו על הערכת היכולות הפרגמטיות בדיבור תוך התמקדות בתחומים המרכזיים הנבדקים בפרגמטיקה הקלינית: מימד השיח והבנת משמעות שאינה מילולית. הערכה מתמקדת בעיקר ביעילות התקשורתית, ללא תלות בהיבטים הפורמליים של השפה, כגון דקדוק או הגייה תקינה.</p>
-            <p>במסגרת המחקר תתבקש/י להשתתף במספר מטלות הכוללות מענה על שאלות בתחומים הבאים: הפקה פרגמטית וניהול שיח, הבנת משמעות עקיפה והבנת שפה ציורית. כמו כן, תתבקש/י למלא שאלונים הנדרשים לצורך המחקר.</p>
-            <p>אם תרצה/י בכך, תוכל/י להפסיק את השתתפותך במחקר בכל שלב, מבלי שתהיה לכך כל השלכה עליך ולא תפגע בך בכל דרך שהיא בהמשך. כל הנתונים המזהים במחקר ישמרו חסויים ולא יהיו זמינים לאף אחד מלבד צוות המחקר, ולא יפורסמו באופן שיאפשר את זיהויך.</p>
-            <p>השתתפותך במחקר עשויה לתרום באופן משמעותי לקידום הידע בתחום הפרגמטיקה ולפיתוח תוכניות התערבות מותאמות אישית עבור מבוגרים המתמודדים עם קשיים בתחום הפרגמטיקה. עם זאת, חשוב להבהיר כי אינך חייב/ת להשתתף במחקר, ולאי-הסכמה לא תהיה כל השלכה עליך ולא תפגע בך בכל דרך שהיא בהמשך.</p>
-            <p>כתמורה על ההשתתפותך במחקר, תקבל/י תגמול כספי.<br>
-            תודה מראש על שיתוף הפעולה.<br>
-            בברכה, ד"ר ילנה אבן-סימקין.</p>
+            אנו מזמינים אותך להשתתף במחקר העוסק בהערכת היכולות הפרגמטיות לצורך פיתוח תכניות התערבות מותאמות אישית...</p>
+            <p>במסגרת המחקר תתבקש/י להשתתף במספר מטלות הכוללות מענה על שאלות בתחומים הבאים...</p>
             <hr>
             <h4>הצהרת המשתתף:</h4>
-            <p>מצהיר/ה בזה כי הוסבר לי מטרות המחקר וחשיבותו, כי ההשתתפות הנה מבחירה בלבד, וכי מובטחת סודיות באשר לזהותי האישית בפרסומים מדעיים. בכל בעיה הקשורה למחקר ניתן לפנות לחוקרת ד"ר ילנה אבן-סימקין באימייל elenaev@sce.ac.il.</p>
+            <p>מצהיר/ה בזה כי הוסבר לי מטרות המחקר וחשיבותו, כי ההשתתפות הנה מבחירה בלבד...</p>
         </div>
         
         <div style="background: #f0f4f8; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
@@ -92,24 +88,18 @@
                 <option value="100 ₪" selected>העברה בנקאית בסך 100 ₪</option>
                 <option value="50 ₪">העברה בנקאית בסך 50 ₪</option>
             </select>
-            
             <hr style="margin: 15px 0;">
             <p><strong>הנני מצהיר/ה כי בשנת המס הנוכחית:</strong></p>
             <label style="display: block; margin-bottom: 15px; cursor: pointer;">
                 <input type="radio" name="tax-declaration" id="tax-dec-radio" value="קיבלתי גמול מסוג זה סך 100 ₪"> 
                 <span id="tax-dec-text">קבלתי גמול מסוג זה (מכלל הניסויים בהם השתתפתי) סך 100 ₪</span>
             </label>
-            <hr style="margin: 15px 0;">
-
-            <p style="font-size: 13px;">ידוע לי כי קבלת גמול זה בגין השתתפותי במחקר אין משמעותה קיום יחסי עובד- מעביד ולא תהיה לי כל תביעה כנגד המכללה בהקשר זה.</p>
-            <p style="font-size: 13px;">כמו כן ידוע לי כי יתכן ואחויב לשלם מס, באם תקרת התקבולים השנתית מגמול מסוג זה תעלה על התקרה הקבועה בחוק (נכון ליום 1.1.12 התקרה הינה 4,800 ₪).</p>
         </div>
 
         <div style="background: #fdf5e6; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
             <h4 style="margin-top: 0;">חתימה על הקבלה:</h4>
             <input type="text" id="receipt-name" placeholder="שם מלא">
             <input type="text" id="receipt-id" placeholder="תעודת זהות">
-            <p style="margin: 10px 0 0 0; font-size: 14px; color: #7f8c8d;">* תאריך ושעת החתימה יתועדו אוטומטית במערכת בעת השליחה.</p>
         </div>
 
         <label class="consent-label" style="background: #fdf5e6; border-color: #f39c12;">
@@ -127,7 +117,6 @@
             <p style="font-size: 18px; color: #2c3e50; font-weight: bold;">
                 אני מסכים/ה לענות על כל השאלות וידוע לי כי כל הנתונים שאמסור יקודדו ויישמרו בסודיות מלאה ולא יאפשרו את זיהוי זהותי.
             </p>
-            <p style="font-size: 16px; color: #555;">תודה.</p>
         </div>
         
         <label class="consent-label">
@@ -146,7 +135,6 @@
         <input type="text" id="firstName" placeholder="שם פרטי">
         <input type="text" id="lastName" placeholder="שם משפחה">
         
-        <!-- אזור שיוצג רק בשאלונים 5A ו-5B -->
         <div id="age-container" style="display: none; background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 15px; border: 1px solid #ffeeba;">
             <p style="margin: 0 0 5px 0; color: #856404; font-weight: bold;">לצורך חישוב הציונים בשאלון זה, חובה להזין את גילך:</p>
             <input type="number" id="age" placeholder="גיל">
@@ -160,6 +148,6 @@
     <div id="success-msg" class="section" style="text-align: center;"></div>
 </div>
 
-<script src="script.js?v=16"></script>
+<script src="script.js?v=21"></script>
 </body>
 </html>

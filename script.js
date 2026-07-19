@@ -4,13 +4,12 @@ let currentSurveyData = null;
 let totalQuestions = 0;
 let currentSurveyName = "";
 
-// משתני מצב לשאלון 5A
 let ds_part = 'A';
 let ds_itemIdx = 0;
 let ds_lastCorrectA = 0;
 let ds_lastCorrectB = 0;
 
-// *** חובה להדביק כאן את הקישור שקיבלת מגוגל שיטס! ***
+// *** חובה להדביק כאן את הקישור שקיבלת מגוגל שיטס לאחר הפריסה החדשה! ***
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBcAQIwzi1PsL02Z3dMr7u7tE-k8gyrjY_WGoJKZYQrQIIAYu1hQ1V7zkCvFadDorr/exec'; 
 
 function openConsentForm() { switchPage('survey-selection', 'full-consent-screen'); }
@@ -89,20 +88,23 @@ function selectSurvey(surveyId) {
         .then(response => { if(!response.ok) throw new Error("File not found"); return response.json(); })
         .then(data => {
             currentSurveyData = data[surveyId]; 
+            
             if(currentSurveyData.type === 'digit_span') {
                 totalQuestions = currentSurveyData.parts.A.items.length + currentSurveyData.parts.B.items.length;
+            } else if (currentSurveyData.type === 'pab') {
+                totalQuestions = 1; 
             } else {
                 totalQuestions = currentSurveyData.questions.length; 
             }
+            
             currentSurveyName = currentSurveyData.title;
             document.getElementById('survey-title-display').innerText = currentSurveyName; 
 
-            // הצגת שדה גיל רק אם נבחר שאלון 5A או 5B
             if (surveyId === 'survey5' || surveyId === 'survey5A') {
                 document.getElementById('age-container').style.display = 'block';
             } else {
                 document.getElementById('age-container').style.display = 'none';
-                document.getElementById('age').value = ''; // ניקוי שדה הגיל במקרה של שאלון אחר
+                document.getElementById('age').value = ''; 
             }
 
             document.getElementById('confidentialityCheck').checked = false;
@@ -121,8 +123,7 @@ function startSurvey() {
     let last = document.getElementById('lastName').value.trim();
     let age = "";
     
-    // בדיקה האם דרוש גיל עבור השאלון הספציפי הזה
-    let requiresAge = (currentSurveyName.includes("5A") || currentSurveyName.includes("5B") || currentSurveyName.includes("שאלון 5"));
+    let requiresAge = (currentSurveyName.includes("5A") || currentSurveyName.includes("5B") || currentSurveyName.includes("שאלון 5")) && !currentSurveyName.includes("PAB");
 
     if (requiresAge) {
         age = document.getElementById('age').value.trim();
@@ -147,6 +148,8 @@ function startSurvey() {
         ds_lastCorrectA = 0;
         ds_lastCorrectB = 0;
         switchPage('intro', 'ds_sec_A_0');
+    } else if (currentSurveyData.type === 'pab') {
+        switchPage('intro', 'pab-container');
     } else {
         switchPage('intro', 'q1'); 
     }
@@ -162,14 +165,281 @@ function renderQuestions() {
         renderVocabularyQuestions();
     } else if (currentSurveyData.type === "digit_span") {
         renderDigitSpanQuestions();
+    } else if (currentSurveyData.type === "pab") {
+        renderPabQuestions();
     } else {
         renderRegularQuestions();
     }
 }
 
 // ============================================================
-// מנגנון שאלון 5A (זכירת ספרות - Digit Span)
+// מנגנון שאלון PAB
 // ============================================================
+function renderPabQuestions() {
+    const container = document.getElementById('survey-container');
+    const langOptions = `<option value="">בחר/י שפה...</option><option value="עברית">עברית</option><option value="ערבית">ערבית</option><option value="אנגלית">אנגלית</option><option value="רוסית">רוסית</option><option value="אמהרית">אמהרית</option><option value="צרפתית">צרפתית</option><option value="ספרדית">ספרדית</option><option value="יידיש">יידיש</option><option value="טיגריניה">טיגריניה</option><option value="אחר">אחר</option>`;
+    const profOptions = `<option value="">רמת שליטה...</option><option value="בסיסית">בסיסית</option><option value="בינונית">בינונית</option><option value="טובה">טובה</option><option value="שוטפת">שוטפת</option>`;
+    
+    const diagnosesList = [
+        'ADHD / קשב וריכוז', 'אוטיזם/אספרגר', 'לקות שפה התפתחותית', 'לקות למידה/דיסלקציה/דיסגרפיה',
+        'חרדה/דיכאון/טראומה', 'OCD', 'אפילפסיה/פגיעת ראש/אירוע נוירולוגי', 'פגיעה בשמיעה או ראייה שאינה מתוקנת',
+        'שימוש בחומרים/מצב רפואי פעיל המשפיע על תפקוד', 'אחר'
+    ];
+
+    let diagHtml = '';
+    diagnosesList.forEach((diag, i) => {
+        diagHtml += `
+        <div class="pab-group" style="background:#fdfdfd; margin-bottom:10px; padding:10px;">
+            <p style="font-weight:bold; margin-bottom:5px;">${diag}</p>
+            <label><input type="radio" name="pab_diag_${i}" value="לא" checked onchange="togglePabDiag(${i})"> לא</label>
+            <label style="margin-right:15px;"><input type="radio" name="pab_diag_${i}" value="כן" onchange="togglePabDiag(${i})"> כן</label>
+            
+            <div id="pab_diag_details_${i}" class="pab-hidden" style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
+                <input type="text" id="pab_diag_age_${i}" placeholder="גיל אבחון / הערות">
+                <select id="pab_diag_who_${i}">
+                    <option value="">מי ביצע את האבחון?</option>
+                    <option value="פסיכולוג/ית">פסיכולוג/ית</option>
+                    <option value="פסיכיאטר/ית">פסיכיאטר/ית</option>
+                    <option value="נוירולוג/ית">נוירולוג/ית</option>
+                    <option value="צוות רב־מקצועי">צוות רב־מקצועי</option>
+                    <option value="אחר">אחר (פרט בהערות)</option>
+                </select>
+            </div>
+        </div>`;
+    });
+
+    const treatmentsList = ['פסיכולוגי', 'נוירולוגי', 'תרופתי (יש לפרט תרופה ומינון)', 'אחר'];
+    let treatHtml = '';
+    treatmentsList.forEach((treat, i) => {
+        treatHtml += `
+        <div class="pab-group" style="background:#fdfdfd; margin-bottom:10px; padding:10px;">
+            <label style="font-weight:bold; cursor:pointer;"><input type="checkbox" id="pab_treat_check_${i}" onchange="togglePabTreat(${i})"> ${treat}</label>
+            <div id="pab_treat_details_${i}" class="pab-hidden" style="margin-top:10px;">
+                <input type="number" id="pab_treat_age_${i}" placeholder="מאיזה גיל?">
+                <input type="text" id="pab_treat_duration_${i}" placeholder="משך הטיפול">
+                <input type="text" id="pab_treat_reason_${i}" placeholder="סיבה">
+                <input type="text" id="pab_treat_helped_${i}" placeholder="האם הטיפול עזר? וכיצד?">
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = `
+    <div id="pab-container" class="section">
+        <h2>שאלון PAB - שאלון מקדים</h2>
+        <div class="pab-group">
+            <h3>1. פרטים כלליים ואישיים</h3>
+            <label>תאריך פגישה:</label>
+            <input type="date" id="pab_date">
+            <select id="pab_meeting_type"><option value="">סוג פגישה...</option><option value="ZOOM">ZOOM</option><option value="פנים מול פנים (F2F)">פנים מול פנים (F2F)</option></select>
+            <input type="number" id="pab_age" placeholder="גיל">
+            <input type="text" id="pab_gender" placeholder="מגדר לפי דיווח עצמי">
+        </div>
+
+        <div class="pab-group">
+            <h3>שפות</h3>
+            <label style="font-weight:bold; display:block;">מהי שפת האם שלך (השפה הראשונה שנרכשה)?</label>
+            <select id="pab_mothertongue" onchange="document.getElementById('pab_mothertongue_other').style.display = (this.value==='אחר' ? 'block' : 'none');">${langOptions}</select>
+            <input type="text" id="pab_mothertongue_other" class="pab-hidden" placeholder="פרט שפת אם">
+
+            <label style="font-weight:bold; display:block; margin-top:15px;">באיזו שפה את/ה משתמש/ת ברוב שעות היום?</label>
+            <select id="pab_mainlang" onchange="document.getElementById('pab_mainlang_other').style.display = (this.value==='אחר' ? 'block' : 'none');">${langOptions}</select>
+            <input type="text" id="pab_mainlang_other" class="pab-hidden" placeholder="פרט שפה">
+            
+            <label style="display:block; margin:20px 0 10px; font-weight:bold; font-size:18px; border-bottom:1px solid #ccc; padding-bottom:5px;">
+                <input type="checkbox" id="pab_more_langs_check" onchange="document.getElementById('pab_more_langs').style.display = this.checked ? 'block' : 'none'" style="transform:scale(1.2); margin-left:5px;"> 
+                האם את/ה דובר/ת שפות נוספות?
+            </label>
+            
+            <div id="pab_more_langs" class="pab-hidden" style="background:#e8f4f8; padding:15px; border-radius:5px;">
+                <p style="font-weight:bold; margin-top:0;">שפה נוספת 1:</p>
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <select id="pab_lang1" style="flex:1;">${langOptions}</select>
+                    <select id="pab_prof1" style="flex:1;">${profOptions}</select>
+                </div>
+                
+                <label style="display:block; margin-bottom:10px; font-weight:bold;"><input type="checkbox" onchange="document.getElementById('pab_lang2_wrap').style.display = this.checked ? 'block' : 'none'"> הוסף שפה נוספת 2</label>
+                <div id="pab_lang2_wrap" class="pab-hidden" style="margin-bottom:10px;">
+                    <div style="display:flex; gap:10px;">
+                        <select id="pab_lang2" style="flex:1;">${langOptions}</select>
+                        <select id="pab_prof2" style="flex:1;">${profOptions}</select>
+                    </div>
+                </div>
+
+                <label style="display:block; margin-bottom:10px; font-weight:bold;"><input type="checkbox" onchange="document.getElementById('pab_lang3_wrap').style.display = this.checked ? 'block' : 'none'"> הוסף שפה נוספת 3</label>
+                <div id="pab_lang3_wrap" class="pab-hidden" style="margin-bottom:10px;">
+                    <div style="display:flex; gap:10px;">
+                        <select id="pab_lang3" style="flex:1;">${langOptions}</select>
+                        <select id="pab_prof3" style="flex:1;">${profOptions}</select>
+                    </div>
+                </div>
+
+                <select id="pab_lang_freq" style="margin-top:10px;">
+                    <option value="">באיזו תדירות את/ה משתמש/ת בשפה הנוספת?</option>
+                    <option value="כמעט אף פעם">כמעט אף פעם</option>
+                    <option value="לעיתים רחוקות">לעיתים רחוקות</option>
+                    <option value="מספר פעמים בשבוע">מספר פעמים בשבוע</option>
+                    <option value="מדי יום">מדי יום</option>
+                    <option value="רוב שעות היום">רוב שעות היום</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="pab-group">
+            <h3>רקע דמוגרפי</h3>
+            <select id="pab_country" onchange="document.getElementById('pab_imm_wrap').style.display = (this.value==='אחר' ? 'block' : 'none');">
+                <option value="">ארץ לידה...</option>
+                <option value="ישראל">ישראל</option>
+                <option value="אחר">אחר (לא ישראל)</option>
+            </select>
+            <div id="pab_imm_wrap" class="pab-hidden">
+                <input type="text" id="pab_country_other" placeholder="פרט ארץ לידה">
+                <input type="number" id="pab_imm_age" placeholder="באיזה גיל עברת להתגורר בישראל?">
+            </div>
+            <input type="number" id="pab_heb_age" placeholder="באיזה גיל התחלת לדבר בעברית?">
+            <select id="pab_hand">
+                <option value="">יד דומיננטית...</option>
+                <option value="ימין">ימין</option>
+                <option value="שמאל">שמאל</option>
+                <option value="שתי הידיים">שתי הידיים</option>
+            </select>
+        </div>
+
+        <div class="pab-group">
+            <h3>השכלה ותעסוקה</h3>
+            <input type="number" id="pab_edu_years" placeholder="שנות לימוד">
+            <input type="text" id="pab_edu_high" placeholder="השכלה גבוהה ביותר">
+            <input type="text" id="pab_prof" placeholder="מקצוע">
+            <select id="pab_emp" onchange="document.getElementById('pab_emp_other').style.display = (this.value==='אחר' ? 'block' : 'none');">
+                <option value="">מצב תעסוקתי...</option><option value="עובד/ת">עובד/ת</option><option value="סטודנט/ית">סטודנט/ית</option><option value="לא עובד/ת">לא עובד/ת</option><option value="גמלאי/ת">גמלאי/ת</option><option value="אחר">אחר</option>
+            </select>
+            <input type="text" id="pab_emp_other" class="pab-hidden" placeholder="פרט מצב תעסוקתי">
+            <select id="pab_econ">
+                <option value="">כיצד היית מדרג/ת את מצבך הכלכלי כיום?</option>
+                <option value="נמוך מאוד">נמוך מאוד</option><option value="נמוך">נמוך</option><option value="ממוצע">ממוצע</option><option value="מעל הממוצע">מעל הממוצע</option><option value="גבוה">גבוה</option>
+            </select>
+            
+            <p style="font-weight:bold; margin-top:15px;">השכלת הורים</p>
+            <select id="pab_edu_mom"><option value="">השכלה גבוהה ביותר של האם...</option><option value="פחות מ-12 שנות לימוד">פחות מ-12 שנות לימוד</option><option value="תיכון">תיכון</option><option value="לימודים מקצועיים">לימודים מקצועיים</option><option value="תואר ראשון">תואר ראשון</option><option value="תואר שני">תואר שני</option><option value="דוקטורט">דוקטורט</option><option value="לא ידוע">לא ידוע</option></select>
+            <select id="pab_edu_dad"><option value="">השכלה גבוהה ביותר של האב...</option><option value="פחות מ-12 שנות לימוד">פחות מ-12 שנות לימוד</option><option value="תיכון">תיכון</option><option value="לימודים מקצועיים">לימודים מקצועיים</option><option value="תואר ראשון">תואר ראשון</option><option value="תואר שני">תואר שני</option><option value="דוקטורט">דוקטורט</option><option value="לא ידוע">לא ידוע</option></select>
+        </div>
+
+        <div class="pab-group">
+            <h3>בריאות</h3>
+            <select id="pab_hearing"><option value="">לקות שמיעה (מכשיר שמיעה)?</option><option value="לא">לא</option><option value="כן">כן</option></select>
+            <select id="pab_vision"><option value="">לקות ראייה (משקפיים)?</option><option value="לא">לא</option><option value="כן">כן</option></select>
+            <select id="pab_meds" onchange="document.getElementById('pab_meds_text').style.display = (this.value==='כן' ? 'block' : 'none');">
+                <option value="">אם נטלת תרופה היום, נא לציין (כן/לא)</option><option value="לא">לא</option><option value="כן">כן</option>
+            </select>
+            <input type="text" id="pab_meds_text" class="pab-hidden" placeholder="פרט איזו תרופה">
+            <input type="number" id="pab_sleep" placeholder="כמה שעות ישנת בלילה האחרון?">
+        </div>
+
+        <div class="pab-group">
+            <h3>2. רקע רפואי ואבחנות</h3>
+            <p style="margin-bottom:15px;">האם קיימת בידך אבחנה כתובה לאחד מהבאים?</p>
+            ${diagHtml}
+        </div>
+
+        <div class="pab-group">
+            <h3>3. טיפולים</h3>
+            <label style="font-weight:bold; display:block; margin-bottom:10px;">האם קיבלת בעבר או מקבל/ת כיום טיפול?</label>
+            <select id="pab_any_treat" onchange="document.getElementById('pab_treat_wrap').style.display = (this.value==='כן' ? 'block' : 'none');">
+                <option value="">בחר...</option><option value="לא">לא</option><option value="כן">כן</option>
+            </select>
+            <div id="pab_treat_wrap" class="pab-hidden" style="margin-top:15px; border-top:2px solid #3498db; padding-top:15px;">
+                <p style="margin-bottom:10px;">נא סמן/י ומלא/י פרטים על הטיפולים הרלוונטיים:</p>
+                ${treatHtml}
+            </div>
+        </div>
+
+        <button class="btn btn-back" onclick="goBackToMain()">חזור למסך הראשי</button>
+        <button class="btn btn-start" style="background-color: #27ae60;" onclick="finalizePAB()">סיום ושליחת שאלון PAB</button>
+    </div>
+    `;
+    
+    window.togglePabDiag = function(idx) {
+        let val = document.querySelector(`input[name="pab_diag_${idx}"]:checked`).value;
+        document.getElementById(`pab_diag_details_${idx}`).style.display = (val === 'כן') ? 'block' : 'none';
+    };
+    window.togglePabTreat = function(idx) {
+        let checked = document.getElementById(`pab_treat_check_${idx}`).checked;
+        document.getElementById(`pab_treat_details_${idx}`).style.display = checked ? 'block' : 'none';
+    };
+}
+
+function finalizePAB() {
+    let addAns = (q, a) => {
+        responses.Answers.push({ Question_Number: responses.Answers.length+1, Question_Text: q, Part: "PAB", Answer: a || "לא צוין", Score: 0, Time_Taken_Sec: 0 });
+    };
+
+    addAns("תאריך וסוג פגישה", document.getElementById('pab_date').value + " | " + document.getElementById('pab_meeting_type').value);
+    addAns("גיל (PAB)", document.getElementById('pab_age').value);
+    addAns("מגדר", document.getElementById('pab_gender').value);
+    
+    let mt = document.getElementById('pab_mothertongue').value;
+    if (mt === 'אחר') mt = document.getElementById('pab_mothertongue_other').value;
+    addAns("שפת אם", mt);
+    
+    let ml = document.getElementById('pab_mainlang').value;
+    if (ml === 'אחר') ml = document.getElementById('pab_mainlang_other').value;
+    addAns("שפה מרכזית", ml);
+    
+    if (document.getElementById('pab_more_langs_check').checked) {
+        let langs = `שפה 1: ${document.getElementById('pab_lang1').value} (${document.getElementById('pab_prof1').value})`;
+        if(document.getElementById('pab_lang2_wrap').style.display === 'block') {
+            langs += ` | שפה 2: ${document.getElementById('pab_lang2').value} (${document.getElementById('pab_prof2').value})`;
+        }
+        if(document.getElementById('pab_lang3_wrap').style.display === 'block') {
+            langs += ` | שפה 3: ${document.getElementById('pab_lang3').value} (${document.getElementById('pab_prof3').value})`;
+        }
+        addAns("שפות נוספות", langs);
+        addAns("תדירות שפה נוספת", document.getElementById('pab_lang_freq').value);
+    } else {
+        addAns("שפות נוספות", "אין");
+        addAns("תדירות שפה נוספת", "לא רלוונטי");
+    }
+
+    let country = document.getElementById('pab_country').value;
+    if(country === 'אחר') country = document.getElementById('pab_country_other').value + " (עלה בגיל " + document.getElementById('pab_imm_age').value + ")";
+    addAns("ארץ לידה", country);
+    addAns("גיל תחילת דיבור עברית", document.getElementById('pab_heb_age').value);
+    addAns("יד דומיננטית", document.getElementById('pab_hand').value);
+    addAns("שנות לימוד והשכלה", document.getElementById('pab_edu_years').value + " שנים | " + document.getElementById('pab_edu_high').value);
+    addAns("מקצוע ותעסוקה", document.getElementById('pab_prof').value + " | " + (document.getElementById('pab_emp').value==='אחר'?document.getElementById('pab_emp_other').value:document.getElementById('pab_emp').value));
+    addAns("מצב כלכלי", document.getElementById('pab_econ').value);
+    addAns("השכלת הורים", "אם: " + document.getElementById('pab_edu_mom').value + " | אב: " + document.getElementById('pab_edu_dad').value);
+    addAns("לקות שמיעה/ראייה", "שמיעה: " + document.getElementById('pab_hearing').value + " | ראייה: " + document.getElementById('pab_vision').value);
+    
+    let meds = document.getElementById('pab_meds').value;
+    if(meds === 'כן') meds += " (" + document.getElementById('pab_meds_text').value + ")";
+    addAns("נטילת תרופות היום", meds);
+    addAns("שעות שינה", document.getElementById('pab_sleep').value);
+
+    const diagnosesList = ['ADHD', 'אוטיזם/אספרגר', 'לקות שפה', 'לקות למידה', 'חרדה/דיכאון', 'OCD', 'אירוע נוירולוגי', 'שמיעה/ראייה', 'מצב רפואי/חומרים', 'אחר'];
+    diagnosesList.forEach((diag, i) => {
+        let isYes = document.querySelector(`input[name="pab_diag_${i}"]:checked`).value === 'כן';
+        let ans = "לא";
+        if(isYes) {
+            ans = `כן | גיל/הערה: ${document.getElementById(`pab_diag_age_${i}`).value} | מאבחן: ${document.getElementById(`pab_diag_who_${i}`).value}`;
+        }
+        addAns(`אבחנה: ${diag}`, ans);
+    });
+
+    let anyTreat = document.getElementById('pab_any_treat').value;
+    addAns("היסטוריית טיפולים", anyTreat);
+    if(anyTreat === 'כן') {
+        const treatmentsList = ['פסיכולוגי', 'נוירולוגי', 'תרופתי', 'אחר'];
+        treatmentsList.forEach((treat, i) => {
+            if(document.getElementById(`pab_treat_check_${i}`).checked) {
+                let det = `גיל: ${document.getElementById(`pab_treat_age_${i}`).value} | משך: ${document.getElementById(`pab_treat_duration_${i}`).value} | סיבה: ${document.getElementById(`pab_treat_reason_${i}`).value} | עזר: ${document.getElementById(`pab_treat_helped_${i}`).value}`;
+                addAns(`טיפול: ${treat}`, det);
+            }
+        });
+    }
+
+    finalizeSurvey();
+}
+
 function renderDigitSpanQuestions() {
     const container = document.getElementById('survey-container');
     let html = '';
@@ -186,7 +456,6 @@ function renderDigitSpanQuestions() {
                 <h2 style="color: #2980b9;">${partData.title} - פריט ${index + 1}</h2>
                 <p class="scenario-text">${partData.instruction}</p>
                 
-                <!-- נסיון 1 -->
                 <div style="background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
                     <h4 style="margin-top: 0;">נסיון 1</h4>
                     <audio id="audio_ds_${part}_${index}_1" src="sound/s5a_${part}_${index}_1.mp3" type="audio/mpeg" preload="auto"></audio>
@@ -195,7 +464,6 @@ function renderDigitSpanQuestions() {
                     <input type="text" id="input_ds_${part}_${index}_1" disabled placeholder="הכנס את המספרים כאן לאחר סיום ההשמעה...">
                 </div>
 
-                <!-- נסיון 2 -->
                 <div style="background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
                     <h4 style="margin-top: 0;">נסיון 2</h4>
                     <audio id="audio_ds_${part}_${index}_2" src="sound/s5a_${part}_${index}_2.mp3" type="audio/mpeg" preload="auto"></audio>
@@ -306,7 +574,6 @@ function nextDigitSpanItem(part, idx) {
         }
     }
 }
-// ============================================================
 
 function renderFauxPasQuestions() {
     const container = document.getElementById('survey-container'); 
@@ -416,7 +683,7 @@ function playVocabAudio(wordId) {
         if (playPromise !== undefined) {
             playPromise.then(() => { btnEl.innerHTML = '⏸ עצור'; })
             .catch(error => { 
-                showError("שגיאה: הקובץ לא נמצא. ודא שקיים קובץ בשם t6s" + wordId + ".wav בתיקיית sound."); 
+                showError("שגיאה: הקובץ לא נמצא."); 
             });
         }
     } else {
@@ -478,7 +745,7 @@ function playStoryAudio(qNum) {
         let playPromise = audioEl.play();
         if (playPromise !== undefined) {
             playPromise.then(() => { btnEl.innerHTML = '⏸ עצור השמעה'; })
-            .catch(error => { showError("שגיאה: הקובץ לא נמצא. ודא שקיים קובץ בתיקיית sound."); });
+            .catch(error => { showError("שגיאה: הקובץ לא נמצא בתיקיית sound."); });
         }
     } else {
         audioEl.pause();
@@ -629,6 +896,8 @@ function cancelBack() {
     document.getElementById('custom-confirm').classList.remove('active'); 
     if (currentSurveyData.type === 'digit_span') {
         document.getElementById(`ds_sec_${ds_part}_${ds_itemIdx}`).classList.add('active');
+    } else if (currentSurveyData.type === 'pab') {
+        document.getElementById('pab-container').classList.add('active');
     } else {
         const questions = document.querySelectorAll('#survey-container .section'); 
         for (let i = questions.length - 1; i >= 0; i--) { 

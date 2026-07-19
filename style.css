@@ -14,15 +14,14 @@ body {
 .section.active { display: block; }
 h2 { color: #2c3e50; line-height: 1.4; margin-bottom: 10px; } 
 .scenario-text { font-size: 18px; margin-bottom: 20px; color: #555555; font-weight: bold; }
-input[type="text"] {
+input[type="text"], input[type="number"], input[type="date"], select {
     width: 100%; padding: 10px; margin: 10px 0; 
     background: #ffffff; color: #333333; 
     border: 1px solid #cccccc; border-radius: 5px; 
-    font-size: 16px; box-sizing: border-box;
+    font-size: 16px; box-sizing: border-box; font-family: 'Assistant', sans-serif;
 }
 input::placeholder { color: #999; }
 
-/* עיצוב חדש לטופס ההסכמה */
 .consent-box {
     border: 1px solid #ccc;
     padding: 15px;
@@ -34,27 +33,31 @@ input::placeholder { color: #999; }
     font-size: 14px;
     line-height: 1.5;
 }
-.consent-box h4 {
-    margin-top: 0;
-    color: #2c3e50;
-}
+.consent-box h4 { margin-top: 0; color: #2c3e50; }
 .consent-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 20px;
-    cursor: pointer;
-    background: #e8f4f8;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #bce0ed;
+    display: flex; align-items: center; gap: 10px;
+    font-weight: bold; color: #2c3e50; margin-bottom: 20px;
+    cursor: pointer; background: #e8f4f8; padding: 10px;
+    border-radius: 5px; border: 1px solid #bce0ed;
 }
-.consent-label input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
+.consent-label input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+
+/* מחלקות ייעודיות לטופס PAB */
+.pab-group {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    background: #fafafa;
+}
+.pab-group h3 {
+    margin-top: 0;
+    color: #2980b9;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 5px;
+}
+.pab-hidden {
+    display: none;
 }
 
 .option {
@@ -85,18 +88,9 @@ input::placeholder { color: #999; }
     h2 { font-size: 20px; }
     .btn, .btn-survey { width: 100%; margin-left: 0; margin-bottom: 10px; box-sizing: border-box; } 
 }
-.btn-back {
-    background: #95a5a6;
-    margin-right: 10px;
-}
-.btn-back:hover {
-    background: #7f8c8d;
-}
+.btn-back { background: #95a5a6; margin-right: 10px; }
+.btn-back:hover { background: #7f8c8d; }
 .confirm-box {
-    border: 2px solid #e74c3c;
-    background: #fffafa;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    margin-top: 20px;
+    border: 2px solid #e74c3c; background: #fffafa; padding: 20px;
+    border-radius: 10px; text-align: center; margin-top: 20px;
 }
