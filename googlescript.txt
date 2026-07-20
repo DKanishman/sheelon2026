@@ -53,44 +53,28 @@ function doPost(e) {
       sheet.autoResizeColumns(1, receiptHeaders.length);
 
     } else {
-      // עדכון הכותרות לכלול את ציון ה-T לכל מדד
-      var headers = [
-        "שם המשתתף", "גיל", "סוג שאלון", "שעת התחלה", "שעת סיום",
-        "5A ציון א", "5A ציון ב", "5A סהכ", "5A ציון תקן", "5A סטטוס", "5A פריט אחרון א", "5A פריט אחרון ב",
-        "5B ציון נ", "5B ציון ד", "5B ציון ח",
-        "5B ציון א", "5B T-א",
-        "5B ציון מ", "5B T-מ",
-        "5B ציון ש\"ר", "5B T-ש\"ר",
-        "5B ציון נ\"ע", "5B T-נ\"ע",
-        "5B ציון י", "5B T-י",
-        "5B ציון ז\"ע", "5B T-ז\"ע",
-        "5B ציון ת/א", "5B T-ת/א",
-        "5B ציון נ\"מ", "5B T-נ\"מ",
-        "5B ציון א\"ס", "5B T-א\"ס",
-        "5B BRI", "5B T-BRI",
-        "5B MI", "5B T-MI",
-        "5B GEC", "5B T-GEC",
-        "ציון כולל", "שאלה", "חלק", "תשובה", "ציון", "זמן מענה (שניות)", 
-        "רייבן א", "רייבן ב", "רייבן ג", "רייבן ד", "רייבן ה"
-      ];
-      sheet.appendRow(headers);
-      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#c9daf8");
-
-      var scoreRA = jsonData.Scores_Parts ? jsonData.Scores_Parts.A : "";
-      var scoreRB = jsonData.Scores_Parts ? jsonData.Scores_Parts.B : "";
-      var scoreRC = jsonData.Scores_Parts ? jsonData.Scores_Parts.C : "";
-      var scoreRD = jsonData.Scores_Parts ? jsonData.Scores_Parts.D : "";
-      var scoreRE = jsonData.Scores_Parts ? jsonData.Scores_Parts.E : "";
-
-      // משתנים לשאלון 5B
+      // יצירת כותרות דינמיות בהתאם לסוג השאלון
+      var headers = ["שם המשתתף", "גיל", "סוג שאלון", "שעת התחלה", "שעת סיום"];
+      
+      // משתני איפוס
+      var scoreRA="", scoreRB="", scoreRC="", scoreRD="", scoreRE="";
       var s5b_A="", s5b_M="", s5b_SR="", s5b_NE="", s5b_I="", s5b_ZE="", s5b_TA="", s5b_NM="", s5b_AS="";
       var s5b_BRI="", s5b_MI="", s5b_GEC="", s5b_N="", s5b_D="", s5b_H="";
       var t_A="", t_M="", t_SR="", t_NE="", t_I="", t_ZE="", t_TA="", t_NM="", t_AS="", t_BRI="", t_MI="", t_GEC="";
-      
-      // משתנים לשאלון 5A
       var s5a_A="", s5a_B="", s5a_Total="", s5a_T="", s5a_Status="", s5a_lastA="", s5a_lastB="";
 
+      // התאמת העמודות והחישובים לפי סוג השאלון
       if (surveyType.includes("שאלון 5B") || surveyType.includes("שאלון 5 (")) {
+        headers = headers.concat([
+          "5B ציון נ", "5B ציון ד", "5B ציון ח",
+          "5B ציון א", "5B T-א", "5B ציון מ", "5B T-מ",
+          "5B ציון ש\"ר", "5B T-ש\"ר", "5B ציון נ\"ע", "5B T-נ\"ע",
+          "5B ציון י", "5B T-י", "5B ציון ז\"ע", "5B T-ז\"ע",
+          "5B ציון ת/א", "5B T-ת/א", "5B ציון נ\"מ", "5B T-נ\"מ",
+          "5B ציון א\"ס", "5B T-א\"ס", "5B BRI", "5B T-BRI",
+          "5B MI", "5B T-MI", "5B GEC", "5B T-GEC"
+        ]);
+        
         function getQScore(qNum) {
             if (!jsonData.Answers) return 0;
             for(var k=0; k<jsonData.Answers.length; k++) {
@@ -120,7 +104,6 @@ function doPost(e) {
                 Math.abs(getQScore(46)-getQScore(56)) + Math.abs(getQScore(52)-getQScore(75)) + 
                 Math.abs(getQScore(60)-getQScore(74)) + Math.abs(getQScore(64)-getQScore(70));
                
-        // חישוב ציון T עבור כל מדד
         t_A = calculateTScore(age, "A", s5b_A);
         t_M = calculateTScore(age, "M", s5b_M);
         t_SR = calculateTScore(age, "SR", s5b_SR);
@@ -133,10 +116,11 @@ function doPost(e) {
         t_BRI = calculateTScore(age, "BRI", s5b_BRI);
         t_MI = calculateTScore(age, "MI", s5b_MI);
         t_GEC = calculateTScore(age, "GEC", s5b_GEC);
-      }
 
-      if (surveyType.includes("שאלון 5A")) {
-        s5a_A = 0; s5a_B = 0;
+      } else if (surveyType.includes("שאלון 5A")) {
+        headers = headers.concat([
+          "5A ציון א", "5A ציון ב", "5A סהכ", "5A ציון תקן", "5A סטטוס", "5A פריט אחרון א", "5A פריט אחרון ב"
+        ]);
         if (jsonData.Answers) {
           jsonData.Answers.forEach(function(ans) {
             if(ans.Part === "A") s5a_A += ans.Score;
@@ -148,28 +132,52 @@ function doPost(e) {
         s5a_Status = (s5a_T < 7) ? "לא תקין" : (s5a_T > 13 ? "מעל הנורמה" : "תקין");
         s5a_lastA = jsonData.s5a_lastA || 0;
         s5a_lastB = jsonData.s5a_lastB || 0;
+
+      } else if (surveyType.includes("רייבן") || surveyType.includes("שאלון 3")) {
+        headers = headers.concat(["רייבן א", "רייבן ב", "רייבן ג", "רייבן ד", "רייבן ה"]);
+        scoreRA = jsonData.Scores_Parts ? jsonData.Scores_Parts.A : "";
+        scoreRB = jsonData.Scores_Parts ? jsonData.Scores_Parts.B : "";
+        scoreRC = jsonData.Scores_Parts ? jsonData.Scores_Parts.C : "";
+        scoreRD = jsonData.Scores_Parts ? jsonData.Scores_Parts.D : "";
+        scoreRE = jsonData.Scores_Parts ? jsonData.Scores_Parts.E : "";
       }
 
+      // הוספת העמודות הרגילות המשותפות לכל שאלון
+      headers = headers.concat(["ציון כולל", "שאלה", "חלק", "תשובה", "ציון", "זמן מענה (שניות)"]);
+      
+      sheet.appendRow(headers);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#c9daf8");
+
+      // כתיבת התשובות לשורות הגיליון
       if (jsonData.Answers && jsonData.Answers.length > 0) {
         for (var i = 0; i < jsonData.Answers.length; i++) {
           var ans = jsonData.Answers[i];
-          sheet.appendRow([
-            participantName, age, surveyType, jsonData.Start_Time, jsonData.End_Time,
-            s5a_A, s5a_B, s5a_Total, s5a_T, s5a_Status, s5a_lastA, s5a_lastB,
-            s5b_N, s5b_D, s5b_H,
-            s5b_A, t_A, s5b_M, t_M, s5b_SR, t_SR, s5b_NE, t_NE, 
-            s5b_I, t_I, s5b_ZE, t_ZE, s5b_TA, t_TA, s5b_NM, t_NM, 
-            s5b_AS, t_AS, s5b_BRI, t_BRI, s5b_MI, t_MI, s5b_GEC, t_GEC,
-            jsonData.Total_Score,
-            ans.Question_Text || "שאלה " + ans.Question_Number, ans.Part || "", ans.Answer, ans.Score, ans.Time_Taken_Sec, 
-            scoreRA, scoreRB, scoreRC, scoreRD, scoreRE
+          var rowData = [participantName, age, surveyType, jsonData.Start_Time, jsonData.End_Time];
+          
+          if (surveyType.includes("שאלון 5B") || surveyType.includes("שאלון 5 (")) {
+              rowData = rowData.concat([s5b_N, s5b_D, s5b_H, s5b_A, t_A, s5b_M, t_M, s5b_SR, t_SR, s5b_NE, t_NE, s5b_I, t_I, s5b_ZE, t_ZE, s5b_TA, t_TA, s5b_NM, t_NM, s5b_AS, t_AS, s5b_BRI, t_BRI, s5b_MI, t_MI, s5b_GEC, t_GEC]);
+          } else if (surveyType.includes("שאלון 5A")) {
+              rowData = rowData.concat([s5a_A, s5a_B, s5a_Total, s5a_T, s5a_Status, s5a_lastA, s5a_lastB]);
+          } else if (surveyType.includes("רייבן") || surveyType.includes("שאלון 3")) {
+              rowData = rowData.concat([scoreRA, scoreRB, scoreRC, scoreRD, scoreRE]);
+          }
+          
+          rowData = rowData.concat([
+              jsonData.Total_Score !== undefined ? jsonData.Total_Score : 0,
+              ans.Question_Text || "שאלה " + ans.Question_Number, 
+              ans.Part || "", 
+              ans.Answer, 
+              ans.Score, 
+              ans.Time_Taken_Sec
           ]);
+          
+          sheet.appendRow(rowData);
         }
       } else {
         var emptyRow = new Array(headers.length).fill("");
         emptyRow[0] = participantName; emptyRow[1] = age; emptyRow[2] = surveyType; 
         emptyRow[3] = jsonData.Start_Time; emptyRow[4] = jsonData.End_Time;
-        emptyRow[40] = "לא נמצאו שאלות";
+        emptyRow[headers.length - 5] = "לא נמצאו שאלות"; 
         sheet.appendRow(emptyRow);
       }
       sheet.autoResizeColumns(1, headers.length);
@@ -216,8 +224,8 @@ function doPost(e) {
 }
 
 // -------------------------------------------------------------
-// פונקציית המרת ציון גלם לציון T לכל המדדים (שאלון 5B)
-// חשוב: יש להשלים את המספרים מתוך ה-PDF במקומות הריקים במילון
+// פונקציית המרת ציון גלם לציון T 
+// עודכנה עם הנתונים מהטבלאות שסופקו ועם לוגיקה לקצוות
 // -------------------------------------------------------------
 function calculateTScore(ageStr, scaleName, rawScore) {
   if (!ageStr || rawScore === undefined || rawScore === "") return "";
@@ -233,22 +241,34 @@ function calculateTScore(ageStr, scaleName, rawScore) {
   else if (age >= 70 && age <= 79) group = "70-79";
   else if (age >= 80 && age <= 90) group = "80-90";
 
-  // כאן יש להזין את הנתונים מטבלאות ה-PDF לפי מדדים
-  // A=אינהיביציה, M=מעברים, SR=שליטה רגשית, NE=ניטור עצמי, I=יזימה, 
-  // ZE=זיכרון עובד, TA=תכנון/ארגון, NM=ניטור משימה, AS=ארגון הסביבה
   var norms = {
-    "18-29": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} },
+    "18-29": { 
+      "A": {8:36, 9:40, 10:43, 11:46, 12:50, 13:53, 14:57, 15:60, 16:63, 17:67, 18:70, 19:74, 20:77, 21:80, 22:84, 23:87, 24:91},
+      "M": {8:47, 9:51, 10:56, 11:60, 12:64, 13:69, 14:73, 15:77, 16:81, 17:86, 18:90},
+      "SR": {10:38, 11:40, 12:43, 13:45, 14:47, 15:49, 16:51, 17:54, 18:56, 19:58, 20:60, 21:63, 22:65, 23:67, 24:69, 25:72, 26:74, 27:76, 28:78, 29:80, 30:83},
+      "NE": {6:37, 7:42, 8:46, 9:50, 10:54, 11:59, 12:63, 13:67, 14:72, 15:76, 16:80, 17:84, 18:89},
+      "I": {8:37, 9:40, 10:43, 11:47, 12:50, 13:53, 14:56, 15:60, 16:63, 17:66, 18:69, 19:73, 20:76, 21:79, 22:82, 23:85, 24:89},
+      "ZE": {8:39, 9:43, 10:46, 11:49, 12:53, 13:56, 14:59, 15:63, 16:66, 17:69, 18:73, 19:76, 20:79, 21:83, 22:86, 23:89, 24:93},
+      "TA": {10:38, 11:41, 12:44, 13:46, 14:49, 15:52, 16:54, 17:57, 18:60, 19:62, 20:65, 21:68, 22:70, 23:73, 24:76, 25:78, 26:81, 27:84, 28:86, 29:89, 30:92},
+      "NM": {6:36, 7:40, 8:45, 9:50, 10:54, 11:59, 12:63, 13:68, 14:72, 15:77, 16:81, 17:86, 18:90},
+      "AS": {8:36, 9:39, 10:42, 11:45, 12:47, 13:50, 14:53, 15:56, 16:58, 17:61, 18:64, 19:67, 20:69, 21:72, 22:75, 23:78, 24:81},
+      "BRI": {30:35, 31:36, 32:37, 33:38, 34:39, 35:40, 36:41, 37:42, 38:43, 39:44, 40:45, 41:46, 42:47, 43:48, 44:49, 45:50, 46:51, 47:52, 48:53, 49:54, 50:55, 51:56, 52:57, 53:58, 54:59, 55:60, 56:61, 57:62, 58:63, 59:64, 60:65, 61:66, 62:67, 63:68, 64:69, 65:70, 66:71, 67:72, 68:73, 69:74, 70:75, 71:76, 72:77, 73:78, 74:79, 75:80, 76:81, 77:82, 78:83, 79:84, 80:85, 81:86, 82:87, 83:88, 84:89, 85:90, 86:91, 87:92, 88:93, 89:94, 90:95},
+      "MI": {40:36, 41:37, 42:37, 43:38, 44:39, 45:39, 46:40, 47:41, 48:41, 49:42, 50:43, 51:44, 52:44, 53:45, 54:46, 55:47, 56:47, 57:48, 58:49, 59:50, 60:50, 61:51, 62:52, 63:53, 64:53, 65:54, 66:54, 67:55, 68:56, 69:56, 70:57, 71:58, 72:58, 73:59, 74:60, 75:60, 76:61, 77:62, 78:62, 79:63, 80:64, 81:65, 82:65, 83:66, 84:67, 85:67, 86:68, 87:69, 88:69, 89:70, 90:71, 91:71, 92:72, 93:73, 94:73, 95:74, 96:75, 97:75, 98:76, 99:77, 100:77, 101:78, 102:79, 103:79, 104:80, 105:81, 106:81, 107:82, 108:83, 109:83, 110:84, 111:85, 112:85, 113:86, 114:87, 115:87, 116:88, 117:89, 118:89, 119:90, 120:95},
+      "GEC": {70:34, 71:35, 72:35, 73:35, 74:36, 75:36, 76:37, 77:37, 78:38, 79:38, 80:39, 81:39, 82:40, 83:40, 84:41, 85:41, 86:41, 87:42, 88:42, 89:43, 90:43, 91:44, 92:44, 93:45, 94:45, 95:46, 96:46, 97:47, 98:47, 99:47, 100:48, 101:48, 102:49, 103:49, 104:50, 105:50, 106:51, 107:51, 108:52, 109:52, 110:53, 111:53, 112:53, 113:54, 114:54, 115:55, 116:55, 117:56, 118:56, 119:57, 120:57, 121:58, 122:58, 123:59, 124:59, 125:59, 126:60, 127:60, 128:61, 129:61, 130:62, 131:62, 132:63, 133:63, 134:64, 135:64, 136:65, 137:65, 138:65, 139:66, 140:66, 141:67, 142:67, 143:68, 144:68, 145:69, 146:69, 147:70, 148:70, 149:71, 150:71, 151:71, 152:72, 153:72, 154:73, 155:73, 156:74, 157:74, 158:75, 159:75, 160:76, 161:76, 162:77, 163:77, 164:77, 165:78, 166:78, 167:79, 168:79, 169:80, 170:80, 171:81, 172:81, 173:82, 174:82, 175:83, 176:83, 177:83, 178:84, 179:84, 180:85, 181:85, 182:86, 183:86, 184:87, 185:87, 186:88, 187:88, 188:89, 189:89, 190:89, 191:90, 192:90, 193:91, 194:91, 195:92, 196:92, 197:93, 198:93, 199:94, 200:94, 201:95, 202:95, 203:95, 204:96, 205:96, 206:97, 207:97, 208:98, 209:98, 210:99}
+    },
     "30-39": { 
-      "A": { 
-        // דוגמה להזנה מתוך ה-PDF שסיפקת: "17": 68
-        "17": 68,
-        "18": 71,
-        "19": 75,
-        "20": 78,
-        "21": 82
-        // נא להמשיך להזין את כל הערכים מהטבלה...
-      }, 
-      "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} 
+      "A": {8:37, 9:41, 10:44, 11:48, 12:51, 13:54, 14:58, 15:61, 16:65, 17:68, 18:71, 19:75, 20:78, 21:82, 22:85, 23:88, 24:92},
+      "M": {8:48, 9:52, 10:56, 11:61, 12:65, 13:69, 14:74, 15:78, 16:83, 17:87, 18:91},
+      "SR": {10:38, 11:41, 12:43, 13:46, 14:48, 15:50, 16:53, 17:55, 18:57, 19:60, 20:62, 21:64, 22:67, 23:69, 24:71, 25:74, 26:76, 27:79, 28:81, 29:83, 30:86},
+      "NE": {6:37, 7:42, 8:46, 9:51, 10:55, 11:59, 12:64, 13:68, 14:72, 15:77, 16:81, 17:86, 18:90},
+      "I": {8:37, 9:41, 10:44, 11:47, 12:51, 13:54, 14:57, 15:61, 16:64, 17:68, 18:71, 19:74, 20:78, 21:81, 22:84, 23:88, 24:91},
+      "ZE": {8:39, 9:43, 10:46, 11:50, 12:53, 13:57, 14:60, 15:64, 16:67, 17:71, 18:74, 19:78, 20:81, 21:85, 22:88, 23:91, 24:95},
+      "TA": {10:39, 11:42, 12:44, 13:47, 14:50, 15:53, 16:55, 17:58, 18:61, 19:64, 20:66, 21:69, 22:72, 23:75, 24:77, 25:80, 26:83, 27:86, 28:88, 29:91, 30:94},
+      "NM": {6:37, 7:42, 8:46, 9:51, 10:56, 11:60, 12:65, 13:69, 14:74, 15:79, 16:83, 17:88, 18:93},
+      "AS": {8:37, 9:40, 10:43, 11:45, 12:48, 13:51, 14:54, 15:57, 16:60, 17:63, 18:66, 19:69, 20:71, 21:74, 22:77, 23:80, 24:83},
+      "BRI": {}, 
+      "MI": {}, 
+      "GEC": {} 
     },
     "40-49": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} },
     "50-59": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} },
@@ -257,13 +277,29 @@ function calculateTScore(ageStr, scaleName, rawScore) {
     "80-90": { "A": {}, "M": {}, "SR": {}, "NE": {}, "I": {}, "ZE": {}, "TA": {}, "NM": {}, "AS": {}, "BRI": {}, "MI": {}, "GEC": {} }
   };
 
-  if (group && norms[group] && norms[group][scaleName] && norms[group][scaleName][rawScore] !== undefined) {
-    return norms[group][scaleName][rawScore];
+  if (group && norms[group] && norms[group][scaleName]) {
+    var table = norms[group][scaleName];
+    if (Object.keys(table).length === 0) {
+        return rawScore + " (לא הוזן בטבלה)";
+    }
+
+    if (table[rawScore] !== undefined) {
+      return table[rawScore];
+    }
+
+    var keys = Object.keys(table).map(Number).sort(function(a,b){return a-b});
+    if (keys.length > 0) {
+      var min = keys[0];
+      var max = keys[keys.length - 1];
+      if (rawScore < min) return table[min];
+      if (rawScore > max) return table[max];
+    }
   }
+  
   return rawScore + " (לא הוזן בטבלה)";
 }
 
-// פונקצית עזר - המרת ציון גלם זכירת ספרות 5A (מקס 30) לציון תקן
+// פונקצית עזר - המרת ציון גלם זכירת ספרות 5A
 function calculateDigitSpanStandardScore(ageStr, rawScore) {
   if (!ageStr || rawScore === undefined) return "";
   var age = parseInt(ageStr, 10);
