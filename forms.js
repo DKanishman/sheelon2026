@@ -69,9 +69,23 @@ function submitReceiptForm() {
     }).catch(error => { showError("אירעה שגיאה בשליחת הנתונים."); switchPage('success-msg', 'receipt-screen'); });
 }
 
+let lastActiveSectionId = "";
+
 function goBackToMain() { 
-    document.querySelector('.section.active')?.classList.remove('active'); 
+    let activeSec = document.querySelector('.section.active');
+    if (activeSec) {
+        lastActiveSectionId = activeSec.id; // שומרים את המסך המדויק שממנו יצאנו
+        activeSec.classList.remove('active'); 
+    }
     document.getElementById('custom-confirm').classList.add('active'); 
+}
+
+function cancelBack() { 
+    document.getElementById('custom-confirm').classList.remove('active'); 
+    // מחזירים אותו בדיוק למסך השמור, בלי תנאים מורכבים
+    if (lastActiveSectionId) {
+        document.getElementById(lastActiveSectionId).classList.add('active');
+    }
 }
 
 function confirmBack() { 
@@ -81,18 +95,4 @@ function confirmBack() {
     document.getElementById('survey-container').innerHTML = ''; 
     document.getElementById('custom-confirm').classList.remove('active'); 
     document.getElementById('survey-selection').classList.add('active'); 
-}
-
-function cancelBack() { 
-    document.getElementById('custom-confirm').classList.remove('active'); 
-    if (currentSurveyData.type === 'digit_span') {
-        document.getElementById(`ds_sec_${ds_part}_${ds_itemIdx}`).classList.add('active');
-    } else if (currentSurveyData.type === 'pab') {
-        document.getElementById('pab-container').classList.add('active');
-    } else {
-        const questions = document.querySelectorAll('#survey-container .section'); 
-        for (let i = questions.length - 1; i >= 0; i--) { 
-            if (responses.Answers && responses.Answers.length === i) { questions[i].classList.add('active'); return; } 
-        } 
-    }
 }

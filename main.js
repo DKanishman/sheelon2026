@@ -1,4 +1,6 @@
 // --- main.js ---
+let autoPilotTimer = null;
+
 function selectSurvey(surveyId) {
     const fetchUrl = 'questions.json?t=' + new Date().getTime();
     fetch(fetchUrl)
@@ -251,4 +253,99 @@ function returnToMainFromSuccess() {
     let hadConsent = responses["Consent_Agreed"]; responses = {}; if (hadConsent) responses["Consent_Agreed"] = hadConsent;
     currentSurveyData = null; totalQuestions = 0; currentSurveyName = ""; document.getElementById('survey-container').innerHTML = '';
     switchPage('success-msg', 'survey-selection');
+}
+
+function toggleDevAutoPilot() {
+    let devBtn = document.getElementById('dev-btn');
+    
+    // אם הטייס האוטומטי כבר פועל - כבה אותו
+    if (autoPilotTimer) {
+        clearInterval(autoPilotTimer);
+        autoPilotTimer = null;
+        devBtn.innerText = "🔴 הפעל טייס אוטומטי";
+        devBtn.style.background = "#e74c3c";
+        console.log("🛑 טייס אוטומטי הופסק ידנית.");
+        return;
+    }
+    
+    console.log("🚀 טייס אוטומטי הופעל! נא להמתין לסיום השאלון...");
+    devBtn.innerText = "⏹️ עצור טייס אוטומטי";
+    devBtn.style.background = "#333";
+    
+    autoPilotTimer = setInterval(() => {
+        let activeSec = document.querySelector('.section.active');
+        if (!activeSec) return;
+
+        // עצירה אוטומטית במסך ההצלחה והדפסת הלוג
+        if (activeSec.id === 'success-msg') {
+            clearInterval(autoPilotTimer);
+            autoPilotTimer = null;
+            devBtn.innerText = "🔴 הפעל טייס אוטומטי";
+            devBtn.style.background = "#e74c3c";
+            console.log("✅ השאלון נשלח בהצלחה! הנה הנתונים שנאספו ב-JSON:");
+            console.log(JSON.parse(JSON.stringify(responses)));
+            return;
+        }
+
+        // פונקציית עזר לבדוק אם אלמנט באמת מוצג כרגע על המסך
+        const isVisible = (elem) => elem.offsetWidth > 0 || elem.offsetHeight > 0;
+
+        // 1. מילוי שדות טקסט ומספרים
+        let inputs = activeSec.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], textarea');
+        inputs.forEach(input => {
+            if (isVisible(input) && !input.value) {
+                input.removeAttribute('disabled'); // עוקף חסימה בזכירת ספרות
+                if (input.type === 'number' || input.id.includes('age') || input.id.includes('ds_')) {
+                    input.value = Math.floor(Math.random() * 50) + 15; // מספר רנדומלי בין 15 ל-65
+                } else if (input.type === 'date') {
+                    input.value = "2024-01-01";
+                } else {
+                    input.value = "בדיקה_" + Math.floor(Math.random() * 1000); // טקסט ג'יבריש
+                }
+            }
+        });
+
+        // 2. מילוי תיבות בחירה נפתחות (Select)
+        let selects = activeSec.querySelectorAll('select');
+        selects.forEach(s => {
+            if (isVisible(s) && !s.value && s.options.length > 1) {
+                s.selectedIndex = Math.floor(Math.random() * (s.options.length - 1)) + 1;
+                s.dispatchEvent(new Event('change')); // מפעיל אירועים תלויים (למשל פתיחת שדות נוספים ב-PAB)
+            }
+        });
+
+        // 3. סימון כפתורי רדיו (Radio)
+        let radios = activeSec.querySelectorAll('input[type="radio"]');
+        let radioNames = new Set(Array.from(radios).filter(isVisible).map(r => r.name));
+        radioNames.forEach(name => {
+            let group = activeSec.querySelectorAll(`input[type="radio"][name="${name}"]`);
+            let isChecked = Array.from(group).some(r => r.checked);
+            if (!isChecked && group.length > 0) {
+                let randRadio = group[Math.floor(Math.random() * group.length)];
+                randRadio.checked = true;
+                randRadio.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // 4. סימון תיבות צ'קבוקס (Checkbox) - הסכמות, תנאים וכו'
+        let checkboxes = activeSec.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            if (isVisible(cb) && !cb.checked) {
+                cb.checked = true;
+                cb.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // 5. מציאת כפתור ההתקדמות ולחיצה עליו
+        let buttons = activeSec.querySelectorAll('button');
+        let nextBtn = Array.from(buttons).find(b => 
+            isVisible(b) && 
+            (b.innerText.includes('המשך') || b.innerText.includes('סיום') || b.innerText.includes('שלח') || b.innerText.includes('שמור'))
+        );
+        
+        if (nextBtn && !nextBtn.disabled) {
+            nextBtn.click();
+        }
+
+    }, 300); // מהירות ההרצה: 300 מילישניות לכל קליק. אפשר להקטין ל-100 אם רוצים שזה יטוס.
 }

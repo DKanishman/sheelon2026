@@ -734,11 +734,11 @@ function submitSurvey12Intro() {
     let gender = document.getElementById('s12_gender').value;
     let age = document.getElementById('s12_age').value;
     
-    // בדיקת תקינות קצרה לנתוני חובה
     if(!gender || !age) {
         showError("אנא מלא/י לפחות את שדות המיגדר והגיל כדי להמשיך.");
         return;
     }
+    responses["Age"] = age;
 
     // פונקציית עזר להוספת התשובות לאובייקט התשובות הראשי
     let pushAns = (q, a) => {
