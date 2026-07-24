@@ -67,10 +67,12 @@ function startSurvey() {
         switchPage('intro', 'ds_sec_A_0');
     } else if (currentSurveyData.type === 'pab') {
         switchPage('intro', 'pab-container');
+    } else if (currentSurveyData.type === 'survey12') { 
+        switchPage('intro', 's12_intro'); // הפניה לטופס הפרטים האישיים של שאלון 12
     } else {
         switchPage('intro', 'q1'); 
     }
-    startTime = Date.now(); 
+    startTime = Date.now();
 }
 
 function renderQuestions() {
@@ -84,6 +86,8 @@ function renderQuestions() {
         renderDigitSpanQuestions();
     } else if (currentSurveyData.type === "pab") {
         renderPabQuestions();
+    } else if (currentSurveyData.type === "survey12") {
+        renderSurvey12Questions(); // הפניה לרינדור שאלון 12
     } else {
         renderRegularQuestions();
     }

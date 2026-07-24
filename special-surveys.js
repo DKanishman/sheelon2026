@@ -654,3 +654,123 @@ function handleVocabNext(pageNum) {
         finalizeSurvey();
     }
 }
+
+function renderSurvey12Questions() {
+    const container = document.getElementById('survey-container');
+    let html = '';
+
+    // יצירת עמוד הפתיחה עם הטופס לפרטים אישיים
+    html += `
+    <div id="s12_intro" class="section">
+        <h2>שאלון 12 - פרטים אישיים</h2>
+        <p style="margin-bottom: 20px; color: #555;">אנא מלא/י את הפרטים הבאים לפני התחלת השאלון (השם ושם המשפחה כבר נשמרו במערכת).</p>
+        
+        <div class="pab-group" style="background: #fdfdfd; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h3 style="border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0; color: #2c3e50;">פרטים אישיים</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div><label>מיגדר:</label><select id="s12_gender"><option value="">בחר...</option><option value="זכר">זכר</option><option value="נקבה">נקבה</option><option value="אחר">אחר</option></select></div>
+                <div><label>גיל:</label><input type="number" id="s12_age" placeholder="גיל"></div>
+                <div><label>יד דומינאנטית:</label><select id="s12_hand"><option value="">בחר...</option><option value="ימין">ימין</option><option value="שמאל">שמאל</option><option value="דו-ידי">דו-ידי</option></select></div>
+                <div><label>מקום הלידה:</label><input type="text" id="s12_birth" placeholder="מקום הלידה"></div>
+                <div><label>השכלה:</label><input type="text" id="s12_edu" placeholder="השכלה"></div>
+                <div><label>שנות לימוד/כיתה:</label><input type="text" id="s12_edu_years" placeholder="שנות לימוד/כיתה"></div>
+                <div style="grid-column: span 2;"><label>מקצוע:</label><input type="text" id="s12_prof" placeholder="מקצוע"></div>
+            </div>
+        </div>
+
+        <div class="pab-group" style="background: #fdfdfd; padding: 20px; border: 1px solid #ddd; border-radius: 5px; margin-top: 15px;">
+            <h3 style="border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0; color: #2c3e50;">פרטים נוספים</h3>
+            <div style="margin-bottom: 10px;"><label>האם נעשו אבחונים בעבר?</label><select id="s12_diag"><option value="">בחר...</option><option value="כן">כן</option><option value="לא">לא</option></select></div>
+            <div style="margin-bottom: 10px;"><label>קשיי קשב וריכוז:</label><select id="s12_adhd"><option value="">בחר...</option><option value="כן">כן</option><option value="לא">לא</option></select></div>
+            <div style="margin-bottom: 10px;"><label>אוטיזם:</label><select id="s12_aut"><option value="">בחר...</option><option value="כן">כן</option><option value="לא">לא</option></select></div>
+            <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <label>לקויות למידה:</label><select id="s12_ld"><option value="">בחר...</option><option value="כן">כן</option><option value="לא">לא</option></select>
+                <input type="text" id="s12_ld_spec" placeholder="לציין איזה..." style="flex: 1; margin: 0;">
+            </div>
+            <div><label>אחר:</label><input type="text" id="s12_other" placeholder="פרט..."></div>
+        </div>
+
+        <button class="btn btn-back" onclick="goBackToMain()">חזור למסך הראשי</button>
+        <button class="btn btn-start" style="background-color: #27ae60;" onclick="submitSurvey12Intro()">שמור נתונים והמשך לשאלון</button>
+    </div>`;
+
+    // רינדור השאלות הרגילות של שאלון 12 שיופיעו מיד לאחר הטופס
+    currentSurveyData.questions.forEach((qObj, index) => {
+        const qNum = index + 1; 
+        let optionsHtml = '';
+        let inputType = qObj.inputType || 'radio';
+        let mediaHtml = '';
+        
+        if (qObj.image) mediaHtml += `<img src="${qObj.image}" alt="שאלה ${qNum}" style="max-width: 100%; height: auto; display: block; margin: 15px auto; border: 2px solid #ccc; border-radius: 5px;">`;
+        if (qObj.audio) mediaHtml += `<div style="text-align: center; padding: 10px; margin-bottom: 15px; background: #fafafa; border: 1px solid #eee; border-radius: 5px;"><p style="margin: 0 0 10px 0; font-weight: bold;">השמעת הנחייה/קטע קול:</p><audio id="audio_reg_${qNum}" src="${qObj.audio}" controls style="width: 100%;"></audio></div>`;
+
+        if (inputType === 'text') {
+            optionsHtml = `<textarea id="ans_text_${qNum}" rows="4" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; font-family:'Assistant'; font-size:16px; box-sizing:border-box;" placeholder="כתוב/כתבי את תשובתך כאן... (ניקוד יחושב ידנית)"></textarea>`;
+        } else {
+            let qOptions = qObj.options || currentSurveyData.options;
+            if (qOptions) {
+                qOptions.forEach((opt, optIndex) => {
+                    const score = (qObj.scores && qObj.scores[optIndex]) !== undefined ? qObj.scores[optIndex] : 0; 
+                    optionsHtml += `<label class="option"><input type="${inputType}" name="ans${qNum}" value="${opt}" data-score="${score}"> ${opt}</label>`;
+                });
+            }
+        }
+        
+        html += `
+        <div id="q${qNum}" class="section">
+            <h2>שאלה ${qNum} מתוך ${totalQuestions}</h2>
+            ${mediaHtml}
+            <p class="scenario-text">${qObj.text}</p>
+            <div style="margin-top:10px;">${optionsHtml}</div><br>
+            <button class="btn btn-back" onclick="goBackToMain()">חזור למסך הראשי</button>
+            <button class="btn" onclick="handleNext(${qNum})">${qNum < totalQuestions ? 'המשך לשאלה הבאה' : 'סיום ושליחה'}</button>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function submitSurvey12Intro() {
+    let gender = document.getElementById('s12_gender').value;
+    let age = document.getElementById('s12_age').value;
+    
+    // בדיקת תקינות קצרה לנתוני חובה
+    if(!gender || !age) {
+        showError("אנא מלא/י לפחות את שדות המיגדר והגיל כדי להמשיך.");
+        return;
+    }
+
+    // פונקציית עזר להוספת התשובות לאובייקט התשובות הראשי
+    let pushAns = (q, a) => {
+        responses.Answers.push({ 
+            Question_Number: 0, 
+            Question_Text: q, 
+            Part: "פרטים אישיים (שאלון 12)", 
+            Answer: a || "-", 
+            Score: 0, 
+            Time_Taken_Sec: 0 
+        });
+    };
+
+    pushAns("מיגדר", gender);
+    pushAns("גיל", age);
+    pushAns("יד דומינאנטית", document.getElementById('s12_hand').value);
+    pushAns("מקום הלידה", document.getElementById('s12_birth').value);
+    pushAns("השכלה", document.getElementById('s12_edu').value);
+    pushAns("שנות לימוד/כיתה", document.getElementById('s12_edu_years').value);
+    pushAns("מקצוע", document.getElementById('s12_prof').value);
+    
+    pushAns("האם נעשו אבחונים", document.getElementById('s12_diag').value);
+    pushAns("קשיי קשב וריכוז", document.getElementById('s12_adhd').value);
+    pushAns("אוטיזם", document.getElementById('s12_aut').value);
+    
+    let ld = document.getElementById('s12_ld').value;
+    let ld_spec = document.getElementById('s12_ld_spec').value;
+    pushAns("לקויות למידה", ld + (ld === 'כן' && ld_spec ? ` (פירוט: ${ld_spec})` : ""));
+    
+    pushAns("אבחונים אחרים", document.getElementById('s12_other').value);
+
+    // מעבר לשאלה האמיתית הראשונה בשאלון
+    switchPage('s12_intro', 'q1');
+    startTime = Date.now();
+}
