@@ -56,12 +56,13 @@ function doPost(e) {
       // יצירת כותרות דינמיות בהתאם לסוג השאלון
       var headers = ["שם המשתתף", "גיל", "סוג שאלון", "שעת התחלה", "שעת סיום"];
       
-      // משתני איפוס
+      // משתני איפוס לחלק מהשאלונים
       var scoreRA="", scoreRB="", scoreRC="", scoreRD="", scoreRE="";
       var s5b_A="", s5b_M="", s5b_SR="", s5b_NE="", s5b_I="", s5b_ZE="", s5b_TA="", s5b_NM="", s5b_AS="";
       var s5b_BRI="", s5b_MI="", s5b_GEC="", s5b_N="", s5b_D="", s5b_H="";
       var t_A="", t_M="", t_SR="", t_NE="", t_I="", t_ZE="", t_TA="", t_NM="", t_AS="", t_BRI="", t_MI="", t_GEC="";
       var s5a_A="", s5a_B="", s5a_Total="", s5a_T="", s5a_Status="", s5a_lastA="", s5a_lastB="";
+      var avgFS="", avgEC="", avgPT="", avgPD="";
 
       // התאמת העמודות והחישובים לפי סוג השאלון
       if (surveyType.includes("שאלון 5B") || surveyType.includes("שאלון 5 (")) {
@@ -140,6 +141,22 @@ function doPost(e) {
         scoreRC = jsonData.Scores_Parts ? jsonData.Scores_Parts.C : "";
         scoreRD = jsonData.Scores_Parts ? jsonData.Scores_Parts.D : "";
         scoreRE = jsonData.Scores_Parts ? jsonData.Scores_Parts.E : "";
+
+      } else if (surveyType.includes("שאלון 14") || surveyType.includes("IRI")) {
+        // --- התוספת החדשה לשאלון 14 ---
+        headers = headers.concat([
+          "14 FS סכום", "14 FS ממוצע",
+          "14 EC סכום", "14 EC ממוצע",
+          "14 PT סכום", "14 PT ממוצע",
+          "14 PD סכום", "14 PD ממוצע"
+        ]);
+
+      } else if (surveyType.includes("שאלון 15")) {
+        // --- התוספת החדשה לשאלון 15 ---
+        headers = headers.concat([
+          "15 רחיצה", "15 אובססיביות", "15 אגרנות", 
+          "15 סדר", "15 בדיקה", "15 נטרול", "מעל ציון חתך (21)"
+        ]);
       }
 
       // הוספת העמודות הרגילות המשותפות לכל שאלון
@@ -156,10 +173,52 @@ function doPost(e) {
           
           if (surveyType.includes("שאלון 5B") || surveyType.includes("שאלון 5 (")) {
               rowData = rowData.concat([s5b_N, s5b_D, s5b_H, s5b_A, t_A, s5b_M, t_M, s5b_SR, t_SR, s5b_NE, t_NE, s5b_I, t_I, s5b_ZE, t_ZE, s5b_TA, t_TA, s5b_NM, t_NM, s5b_AS, t_AS, s5b_BRI, t_BRI, s5b_MI, t_MI, s5b_GEC, t_GEC]);
+          
           } else if (surveyType.includes("שאלון 5A")) {
               rowData = rowData.concat([s5a_A, s5a_B, s5a_Total, s5a_T, s5a_Status, s5a_lastA, s5a_lastB]);
+          
           } else if (surveyType.includes("רייבן") || surveyType.includes("שאלון 3")) {
               rowData = rowData.concat([scoreRA, scoreRB, scoreRC, scoreRD, scoreRE]);
+          
+          } else if (surveyType.includes("שאלון 14") || surveyType.includes("IRI")) {
+              // חישוב שאלון 14
+              function getQScore14(qNum) {
+                  if (!jsonData.Answers) return 0;
+                  for(var k=0; k<jsonData.Answers.length; k++) {
+                      if(jsonData.Answers[k].Question_Number === qNum) return jsonData.Answers[k].Score;
+                  }
+                  return 0;
+              }
+              var sumFS = getQScore14(1) + getQScore14(5) + getQScore14(7) + getQScore14(12) + getQScore14(16) + getQScore14(23) + getQScore14(26);
+              var sumEC = getQScore14(2) + getQScore14(4) + getQScore14(9) + getQScore14(14) + getQScore14(18) + getQScore14(20) + getQScore14(22);
+              var sumPT = getQScore14(3) + getQScore14(8) + getQScore14(11) + getQScore14(15) + getQScore14(21) + getQScore14(25) + getQScore14(28);
+              var sumPD = getQScore14(6) + getQScore14(10) + getQScore14(13) + getQScore14(17) + getQScore14(19) + getQScore14(24) + getQScore14(27);
+              
+              avgFS = (sumFS / 7).toFixed(2);
+              avgEC = (sumEC / 7).toFixed(2);
+              avgPT = (sumPT / 7).toFixed(2);
+              avgPD = (sumPD / 7).toFixed(2);
+              
+              rowData = rowData.concat([sumFS, avgFS, sumEC, avgEC, sumPT, avgPT, sumPD, avgPD]);
+
+          } else if (surveyType.includes("שאלון 15")) {
+              // חישוב שאלון 15
+              function getQScore15(qNum) {
+                  if (!jsonData.Answers) return 0;
+                  for(var k=0; k<jsonData.Answers.length; k++) {
+                      if(jsonData.Answers[k].Question_Number === qNum) return jsonData.Answers[k].Score;
+                  }
+                  return 0;
+              }
+              var wash = getQScore15(5) + getQScore15(11) + getQScore15(17);
+              var obs = getQScore15(6) + getQScore15(12) + getQScore15(18);
+              var hoard = getQScore15(1) + getQScore15(7) + getQScore15(13);
+              var order = getQScore15(3) + getQScore15(9) + getQScore15(15);
+              var check = getQScore15(2) + getQScore15(8) + getQScore15(14);
+              var neut = getQScore15(4) + getQScore15(10) + getQScore15(16);
+              var isAboveCutoff = (jsonData.Total_Score !== undefined && jsonData.Total_Score >= 21) ? "כן" : "לא";
+              
+              rowData = rowData.concat([wash, obs, hoard, order, check, neut, isAboveCutoff]);
           }
           
           rowData = rowData.concat([
@@ -209,6 +268,10 @@ function doPost(e) {
       finalScoreText = "נ: " + s5b_N + " | ד: " + s5b_D + " | ח: " + s5b_H + " | T: " + t_GEC;
     } else if (surveyType.includes("שאלון 5A")) {
       finalScoreText = "א: " + s5a_A + " | ב: " + s5a_B + " | ציון תקן: " + s5a_T + " (" + s5a_Status + ")";
+    } else if (surveyType.includes("שאלון 14") || surveyType.includes("IRI")) {
+      finalScoreText = "FS: " + avgFS + " | EC: " + avgEC + " | PT: " + avgPT + " | PD: " + avgPD;
+    } else if (surveyType.includes("שאלון 15")) {
+      finalScoreText = (jsonData.Total_Score !== undefined ? jsonData.Total_Score : 0) + (isAboveCutoff === "כן" ? " (מעל קו החתך 21)" : "");
     } else {
       finalScoreText = (jsonData.Total_Score !== undefined) ? jsonData.Total_Score : 0;
     }
@@ -225,7 +288,6 @@ function doPost(e) {
 
 // -------------------------------------------------------------
 // פונקציית המרת ציון גלם לציון T 
-// עודכנה עם הנתונים מהטבלאות שסופקו ועם לוגיקה לקצוות
 // -------------------------------------------------------------
 function calculateTScore(ageStr, scaleName, rawScore) {
   if (!ageStr || rawScore === undefined || rawScore === "") return "";

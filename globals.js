@@ -11,7 +11,7 @@ let ds_lastCorrectA = 0;
 let ds_lastCorrectB = 0;
 
 // הקישור שלך ל-Google Sheets
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRcVgat5nlIdEth9gO6yDwh86QZfMol7Ccpn6fs8AFmGmY2QfSxl_XgA8TcQbPaYzU/exec'; 
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwe3bSoh6_pSjTnxM-emW6QaQ-Ali9HL2C96E7msr3xvunthyBxTfPqHubpDt3dtw1r/exec'; 
 
 function showError(msg) {
     const eb = document.getElementById('error-box'); 
