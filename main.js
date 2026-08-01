@@ -110,8 +110,9 @@ function renderRegularQuestions() {
         let optionsHtml = '';
         let inputType = qObj.inputType || 'radio';
 
-        // הוספת תמיכה בתמונות
         let mediaHtml = '';
+        
+        // הוספת תמיכה בתמונות
         if (qObj.image) {
             mediaHtml += `<img src="${qObj.image}" alt="שאלה ${qNum}" style="max-width: 100%; height: auto; display: block; margin: 15px auto; border: 2px solid #ccc; border-radius: 5px;">`;
         }
@@ -122,6 +123,15 @@ function renderRegularQuestions() {
             <div style="text-align: center; padding: 10px; margin-bottom: 15px; background: #fafafa; border: 1px solid #eee; border-radius: 5px;">
                 <p style="margin: 0 0 10px 0; font-weight: bold;">השמעת הנחייה/קטע קול:</p>
                 <audio id="audio_reg_${qNum}" src="${qObj.audio}" controls style="width: 100%;"></audio>
+            </div>`;
+        }
+
+        // ---> הוספת תמיכה בוידאו (זה מה שחסר אצלך) <---
+        if (qObj.video) {
+            mediaHtml += `
+            <div style="text-align: center; padding: 15px; margin-bottom: 15px; background: #e8f4f8; border: 1px solid #bce0ed; border-radius: 5px;">
+                <p style="margin: 0 0 10px 0; font-weight: bold; color: #2c3e50;">צפה/י בסרטון:</p>
+                <video id="video_reg_${qNum}" src="${qObj.video}" controls style="width: 100%; max-width: 100%; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></video>
             </div>`;
         }
 
